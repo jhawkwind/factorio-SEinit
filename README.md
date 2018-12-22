@@ -64,7 +64,7 @@ This is a fork of https://github.com/Bisa/factorio-init
 - Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
 - Compiling the module by hand without SELINUX devtools:
   ```bash
-  [root@localhost]# checkmodule _m -m -o factorio.mod factorio.te
+  [root@localhost]# checkmodule -M -m -o factorio.mod factorio.te
   [root@localhost]# semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
   [root@localhost]# semodule -i factorio.pp
   ```
