@@ -153,10 +153,23 @@ usage(){
 
 ME=`whoami`
 as_user() {
+  if [ ${SELINUX} -eq 1 ]; then # For the sake of clarity with SELINUX diagnostics.
+	echo "$(whoami) with context $(id -Z) executing: "
+	echo "${1}"
+  fi
+  
   if [ $ME == $USERNAME ]; then # Are we the factorio user?
-    bash -c "$1"
+	  if [ ${SELINUX} -eq 1 ]; then
+    	/bin/bash -c "runcon -t factorio_t -r system_r -u system_u $1"
+      else
+    	/bin/bash -c "$1"
+      fi
   elif [ "$(id -u)" == "0" ]; then # Are we root?
-    su $USERNAME -s /bin/bash -c "$1"
+  	if [ ${SELINUX} -eq 1 ]; then
+    	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u $1"
+    else
+      su $USERNAME -s /bin/bash -c "$1"
+    fi
   else
     # To prevent odd permission behaviour, either
     # run this script as the configured user or as root
@@ -188,7 +201,7 @@ wait_pingpong() {
 
 start_service() {
   if [ -e ${PIDFILE} ]; then
-    ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+    ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
     if [ "$?" -eq "0" ]; then
       echo "${SERVICE_NAME} is already running!"
       return 1
@@ -213,7 +226,7 @@ start_service() {
 
   as_user "tail -f ${FIFO} |${INVOCATION} ${EXE_ARGS_GLIBC}>> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
 
-  ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+  ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
   if [ "$?" -ne "0" ]; then
     echo "Unable to start ${SERVICE_NAME}"
     return 1

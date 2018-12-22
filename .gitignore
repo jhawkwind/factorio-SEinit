@@ -2,3 +2,6 @@ config
 factorio.service
 factorio-env.service
 systemd.env
+.project
+.gitignore
+selinux/notes.txt

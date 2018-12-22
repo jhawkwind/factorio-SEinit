@@ -1,9 +1,30 @@
-# Factorio Init Script
-A factorio init script for linux
+# Factorio (SE)Init Script
+A factorio init script for linux with an optional SELINUX policy add-on.
+This is a fork of https://github.com/Bisa/factorio-init
+
+## TODO
+ * TCP/UDP port controls (netfilter).
+ * firewall-cmd commands.
+ * SELINUX Boolean values for certain functions such as network, sockets, user home reads, etc.
+ * SELINUX_u user and roles.
+ * Proper transition points from init-script.
+ * Tighten up policy rules to explicits.
 
 # Dependencies
  Among others:
  - cURL
+
+## SELINUX Dependencies
+   - **REQUIRED**
+     - _coreutils_ package - Required in all cases.
+     - _policycoreutils_ package - Required in all cases.
+   - **REQUIRED if small changes or recompiling only**
+     - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
+     - gcc - Required to recompile. 
+     - make - Required to recompile.
+   - **REQUIRED to debug the policy**
+     - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
+
 
 # Debugging
  If you find yourself wondering why stuff is not working the way you expect:
@@ -28,7 +49,27 @@ A factorio init script for linux
  ```
 - Rename config.example to config and modify the values within according to your setup.
 
-## Notes for users with an OS that has a older glibc version:
+## SELINUX Enablement
+- You must set `SELINUX=1` in the **config** file to have the init script change context into the **factorio_t** domain.
+- The policy expects you to have the INIT script, Factorio, and GLIBC-2.18 in either **/opt** or **/data**. If you put them
+  anywhere else, you will need to modify **selinux/factorio.fc** and (of course) the **config** to tell it the new locations,
+  and manually compilie and install the SELINUX policy modules.
+- File location format:
+  * /opt (or /data)
+    * /factorio/
+    * /factorio-init/
+    * /glibc-2.18/
+      * lib/
+        * ld-2.18.so
+- Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
+- Compiling the module by hand without SELINUX devtools:
+  ```bash
+  [root@localhost]# checkmodule _m -m -o factorio.mod factorio.te
+  [root@localhost]# semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
+  [root@localhost]# semodule -i factorio.pp
+  ```
+
+## Notes for users with CentOS 7 that has a older glibc version:
 
 - The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
 https://forums.factorio.com/viewtopic.php?t=54654#p324493
@@ -70,18 +111,6 @@ https://forums.factorio.com/viewtopic.php?t=54654#p324493
  $ systemctl status -l factorio
  # Remember to enable the service at startup if you want that:
  $ systemctl enable factorio
- ```
-
-## SysvInit
-- Symlink the init script:
-
- ```bash
- $ ln -s /opt/factorio-init/factorio /etc/init.d/factorio
- # Make the script executable:
- $ chmod +x /opt/factorio-init/factorio
- # Try it out:
- $ service factorio help
- # Do not forget to enable the service at boot if you want that.
  ```
 
 # Thank You

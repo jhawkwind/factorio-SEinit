@@ -1,0 +1,40 @@
+
+## <summary>policy for factorio</summary>
+
+########################################
+## <summary>
+##	Execute factorio_exec_t in the factorio domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`factorio_domtrans',`
+	gen_require(`
+		type factorio_t, factorio_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, factorio_exec_t, factorio_t)
+')
+
+######################################
+## <summary>
+##	Execute factorio in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`factorio_exec',`
+	gen_require(`
+		type factorio_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, factorio_exec_t)
+')

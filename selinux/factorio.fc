@@ -1,0 +1,5 @@
+/(opt|data)/factorio/bin/(x64|x86)/factorio	--	gen_context(system_u:object_r:factorio_exec_t,s0)
+/(opt|data)/factorio(/.*)?				system_u:object_r:factorio_t:s0
+/(opt|data)/factorio-init(/.*)?				system_u:object_r:factorio_t:s0
+/(opt|data)/glibc-[^/]*/lib/ld-[^/]*\.so(\.[^/]*)*	system_u:object_r:ld_so_t:s0
+/(opt|data)/factorio-init/factorio		--	system_u:object_r:factorio_t:s0
