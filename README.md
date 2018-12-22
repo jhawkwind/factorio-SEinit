@@ -16,6 +16,8 @@ This is a fork of https://github.com/Bisa/factorio-init
 
 ## SELINUX Dependencies
    - **REQUIRED**
+     - SELINUX installed and enabled.
+     - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
      - _coreutils_ package - Required in all cases.
      - _policycoreutils_ package - Required in all cases.
    - **REQUIRED if small changes or recompiling only**
@@ -64,9 +66,12 @@ This is a fork of https://github.com/Bisa/factorio-init
 - Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
 - Compiling the module by hand without SELINUX devtools:
   ```bash
-  [root@localhost]# checkmodule -M -m -o factorio.mod factorio.te
-  [root@localhost]# semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
-  [root@localhost]# semodule -i factorio.pp
+  [root@localhost]$ checkmodule -M -m -o factorio.mod factorio.te
+  [root@localhost]$ semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
+  [root@localhost]$ semodule -i factorio.pp
+  [root@localhost]$ restorecon -R -v /opt/factorio
+  [root@localhost]$ restorecon -R -v /opt/factorio-init
+  [root@localhost]$ restorecon -R -v /opt/glibc-2.18
   ```
 
 ## Notes for users with CentOS 7 that has a older glibc version:
