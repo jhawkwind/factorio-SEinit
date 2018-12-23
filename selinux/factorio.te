@@ -32,7 +32,7 @@ require {
         class tcp_socket { connect create getattr getopt setopt };
         class fifo_file { getattr open read write };
         class rawip_socket { create getopt setopt };
-        class netlink_route_socket { bind create getattr nlmsg_read };
+        class netlink_route_socket { bind create getattr nlmsg_read write read };
         class udp_socket { bind connect create getattr setopt };
 }
 
@@ -82,11 +82,11 @@ allow factorio_t self:dir rw_dir_perms;
 allow factorio_t self:file { getattr unlink append read setattr write lock create rename link open }; # Redundant plus some additional
 allow factorio_t self:dir { getattr unlink append read setattr write lock create rename link search rmdir remove_name add_name open }; # Redundant plus some additional
 allow factorio_t self:capability net_raw;
-allow factorio_t self:netlink_route_socket { bind create getattr nlmsg_read };
+allow factorio_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
 allow factorio_t self:process setcap;
 allow factorio_t self:rawip_socket { create getopt setopt };
-allow factorio_t self:tcp_socket { connect create getattr getopt setopt };
-allow factorio_t self:udp_socket { bind connect create getattr setopt };
+allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
+allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
 allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 corecmd_exec_bin(factorio_t);
 corecmd_exec_shell(factorio_t);
