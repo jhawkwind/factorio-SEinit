@@ -81,33 +81,14 @@ https://forums.factorio.com/viewtopic.php?t=54654#p324493
 
 ```bash
 yum install glibc-devel glibc
-cd /tmp
-git clone git://sourceware.org/git/glibc.git
-cd glibc
-git checkout release/2.18/master
+cd ./glibc
+git apply ../patches/test-installation.pl.patch
 mkdir glibc-build
 cd glibc-build
 ../configure --prefix='/opt/glibc-2.18'
-```
-Fix the test script
-fix line 179 of the test install script:
-```
-vi ../scripts/test-installation.pl
-```
-change from
-```perl
-if (/$ld_so_name/) {
-```
-change to
-```
-if (/\Q$ld_so_name\E/) { 
-```
-save the changes, then run the command to build and install
-```
 make
 make install
 ```
-
 
 ## First-run
 - If you don't have Factorio installed already, use the `install` command:
