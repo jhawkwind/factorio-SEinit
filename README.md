@@ -1,5 +1,32 @@
-# Factorio Init Script
-A factorio init script for linux
+# Factorio (SE)Init Script
+A factorio init script for linux with an optional SELINUX policy add-on.
+This is a fork of https://github.com/Bisa/factorio-init
+
+## TODO
+ * TCP/UDP port controls (netfilter).
+ * firewall-cmd commands.
+ * SELINUX Boolean values for certain functions such as network, sockets, user home reads, etc.
+ * SELINUX_u user and roles.
+ * Proper transition points from init-script.
+ * Tighten up policy rules to explicits.
+
+# Dependencies
+ Among others:
+ - cURL
+
+## SELINUX Dependencies
+   - **REQUIRED**
+     - SELINUX installed and enabled.
+     - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
+     - _coreutils_ package - Required in all cases.
+     - _policycoreutils_ package - Required in all cases.
+   - **REQUIRED if small changes or recompiling only**
+     - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
+     - gcc - Required to recompile. 
+     - make - Required to recompile.
+     - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
+     - _setools-console_ package - Required if debugging, optional in other cases.
+
 
 # Debugging
  If you find yourself wondering why stuff is not working the way you expect:
@@ -20,9 +47,67 @@ A factorio init script for linux
 
  ```bash
  $ cd '/opt'
- $ git clone https://github.com/Bisa/factorio-init.git
+ $ git clone https://github.com/jhawkwind/factorio-SEinit
  ```
 - Rename config.example to config and modify the values within according to your setup.
+
+## SELINUX Enablement
+- You must set `SELINUX=1` in the **config** file to have the init script change context into the **factorio_t** domain.
+- The policy expects you to have the INIT script, Factorio, and GLIBC-2.18 in either **/opt** or **/data**. If you put them
+  anywhere else, you will need to modify **selinux/factorio.fc** and (of course) the **config** to tell it the new locations,
+  and manually compilie and install the SELINUX policy modules.
+- File location format:
+  * /opt (or /data)
+    * /factorio/
+    * /factorio-init/
+    * /glibc-2.18/
+      * lib/
+        * ld-2.18.so
+- Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
+- Compiling the module by hand:
+  ```bash
+  [root@localhost]$ checkmodule -M -m -o factorio.mod factorio.te
+  [root@localhost]$ semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
+  [root@localhost]$ semodule -i factorio.pp
+  [root@localhost]$ restorecon -R -v /opt/factorio
+  [root@localhost]$ restorecon -R -v /opt/factorio-init
+  [root@localhost]$ restorecon -R -v /opt/glibc-2.18
+  ```
+
+## Notes for users with CentOS 7 that has a older glibc version:
+
+- The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
+https://forums.factorio.com/viewtopic.php?t=54654#p324493
+
+```bash
+yum install glibc-devel glibc
+cd /tmp
+git clone git://sourceware.org/git/glibc.git
+cd glibc
+git checkout release/2.18/master
+mkdir glibc-build
+cd glibc-build
+../configure --prefix='/opt/glibc-2.18'
+```
+Fix the test script
+fix line 179 of the test install script:
+```
+vi ../scripts/test-installation.pl
+```
+change from
+```perl
+if (/$ld_so_name/) {
+```
+change to
+```
+if (/\Q$ld_so_name\E/) { 
+```
+save the changes, then run the command to build and install
+```
+make
+make install
+```
+
 
 ## First-run
 - If you don't have Factorio installed already, use the `install` command:
@@ -61,18 +146,6 @@ A factorio init script for linux
  $ systemctl status -l factorio
  # Remember to enable the service at startup if you want that:
  $ systemctl enable factorio
- ```
-
-## SysvInit
-- Symlink the init script:
-
- ```bash
- $ ln -s /opt/factorio-init/factorio /etc/init.d/factorio
- # Make the script executable:
- $ chmod +x /opt/factorio-init/factorio
- # Try it out:
- $ service factorio help
- # Do not forget to enable the service at boot if you want that.
  ```
 
 # Thank You

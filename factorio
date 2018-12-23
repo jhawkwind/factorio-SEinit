@@ -40,7 +40,11 @@ if [ -z "${HEADLESS}" ]; then
   HEADLESS=1
 fi
 if [ -z "${LATEST_HEADLESS_URL}" ]; then
-  LATEST_HEADLESS_URL="https://www.factorio.com/get-download/latest/headless/linux64"
+  if [ ${UPDATE_EXPERIMENTAL} -gt 0 ]; then
+    LATEST_HEADLESS_URL="https://www.factorio.com/get-download/latest/headless/linux64"
+  else
+    LATEST_HEADLESS_URL="https://www.factorio.com/get-download/stable/headless/linux64"
+  fi
 fi
 if [ -z "${NONCMDPATTERN}" ]; then
   NONCMDPATTERN='(^\s*(\s*[0-9]+\.[0-9]+|\)|\())|(Players:$)'
@@ -48,14 +52,27 @@ fi
 if [ -z ${BINARY} ]; then
   # Factorio headless only comes in x64 flavour - if you run anything else, override it in the config
   BINARY="${FACTORIO_PATH}/bin/x64/factorio"
+  BINARYB="${FACTORIO_PATH}/bin/x64/factorio"
+fi
+if [ -z ${ALT_GLIBC} ]; then
+  ALT_GLIBC=0
+fi
+if [ -z ${WAIT_PINGPONG} ]; then
+  WAIT_PINGPONG=0
 fi
 
+if [ ${ALT_GLIBC} -gt 0 ]; then
+  # If ALT_GLIBC is non 0 then activate alternative glibc root here
+  BINARY="${ALT_GLIBC_DIR}/lib/ld-${ALT_GLIBC_VER}.so --library-path ${ALT_GLIBC_DIR}/lib ${FACTORIO_PATH}/bin/x64/factorio"
+  BINARYB="${FACTORIO_PATH}/bin/x64/factorio"
+  EXE_ARGS_GLIBC="--executable-path ${BINARYB}"
+fi
 case "$1" in
   install|help|listcommands|version|"")
     ;;
   *)
-    if ! [ -e ${BINARY} ]; then
-      echo "Could not find factorio binary! ${BINARY}"
+    if ! [ -e ${BINARYB} ]; then
+      echo "Could not find factorio binary! ${BINARYB}"
       echo "(if you store your binary some place else, override BINARY='/your/path' in the config)"
       exit 1
     fi
@@ -75,8 +92,8 @@ case "$1" in
       echo "If this is the first time you run this script you need to generate the config.ini by starting the server manually."
       echo "(also make sure you have a save to run or the server will not start)"
       echo
-      echo "Create save: sudo -u ${USERNAME} ${BINARY} --create ${FACTORIO_PATH}/saves/my_savegame"
-      echo "Start server: sudo -u ${USERNAME} ${BINARY} --start-server-load-latest"
+      echo "Create save: sudo -u ${USERNAME} ${BINARY} --create ${FACTORIO_PATH}/saves/my_savegame ${EXE_ARGS_GLIBC}"
+      echo "Start server: sudo -u ${USERNAME} ${BINARY} --start-server-load-latest ${EXE_ARGS_GLIBC}"
       echo
       echo "(If you rather store the config.ini in another location, set FCONF='/your/path' in this scripts config file)"
       exit 1
@@ -87,7 +104,7 @@ case "$1" in
       # as it relies on the factorio write dir to live ../../ up from the binary if __PATH__executable__
       # is used in the config file.. for now, that's the default so cross your fingers it will not change ;)
       debug "Determining WRITE_DIR based on ${FCONF}, IF you edited write-data from the default, this probably fails"
-      WRITE_DIR=$(dirname "$(echo `grep "^write-data=" "$FCONF"` |cut -d'=' -f2 |sed -e 's#__PATH__executable__#'$(dirname "$BINARY")/..'#g')")
+      WRITE_DIR=$(dirname "$(echo `grep "^write-data=" "$FCONF"` |cut -d'=' -f2 |sed -e 's#__PATH__executable__#'$(dirname "$BINARYB")/..'#g')")
     fi
     debug "write path: $WRITE_DIR"
   
@@ -106,7 +123,7 @@ case "$1" in
     fi
   
     # Finally, set up the invocation
-    INVOCATION="${BINARY} --config ${FCONF} --port ${PORT} --start-server-load-latest --server-settings ${SERVER_SETTINGS} ${RCON} ${EXTRA_BINARGS}"
+    INVOCATION="${BINARY} --config ${FCONF} --port ${PORT} --start-server-load-latest --server-settings ${SERVER_SETTINGS} ${EXTRA_BINARGS}"
     ;;
 esac
   
@@ -136,10 +153,25 @@ usage(){
 
 ME=`whoami`
 as_user() {
+  if [ ${SELINUX} -eq 1 ]; then # For the sake of clarity with SELINUX diagnostics.
+	echo "$(whoami) with context $(id -Z) executing: "
+	echo "${1}"
+  fi
+  
   if [ $ME == $USERNAME ]; then # Are we the factorio user?
-    bash -c "$1"
+	  if [ ${SELINUX} -eq 1 ]; then
+    	runcon -t factorio_t -r system_r -u system_u /bin/bash -c "${1}"
+      else
+    	/bin/bash -c "$1"
+      fi
   elif [ "$(id -u)" == "0" ]; then # Are we root?
-    su $USERNAME -s /bin/bash -c "$1"
+  	if [ ${SELINUX} -eq 1 ]; then
+  		# Yeah, it is a shell within a shell within another shell. But it is necessary due to the limitations
+  		# of SU requiring a shell to execute, then the compiled command needing its own little world.
+    	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u /bin/bash -c '${1}'"
+    else
+      su $USERNAME -s /bin/bash -c "$1"
+    fi
   else
     # To prevent odd permission behaviour, either
     # run this script as the configured user or as root
@@ -164,9 +196,14 @@ is_running() {
   return 1
 }
 
+wait_pingpong() {
+  until ping -c1 pingpong1.factorio.com &>/dev/null; do :; done
+  until ping -c1 pingpong2.factorio.com &>/dev/null; do :; done
+}
+
 start_service() {
   if [ -e ${PIDFILE} ]; then
-    ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+    ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
     if [ "$?" -eq "0" ]; then
       echo "${SERVICE_NAME} is already running!"
       return 1
@@ -185,9 +222,13 @@ start_service() {
     echo "" > ${CMDOUT}
   fi
 
-  as_user "tail -f ${FIFO} |${INVOCATION} >> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
+  if [ ${WAIT_PINGPONG} -gt 0 ]; then
+    wait_pingpong
+  fi
 
-  ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+  as_user "tail -f ${FIFO} |${INVOCATION} ${EXE_ARGS_GLIBC}>> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
+
+  ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
   if [ "$?" -ne "0" ]; then
     echo "Unable to start ${SERVICE_NAME}"
     return 1
@@ -241,22 +282,30 @@ stop_service() {
 }
 
 send_cmd(){
+  NEED_OUTPUT=0
+  if [ "xx$1" == "xx-o" ]; then
+    NEED_OUTPUT=1
+    shift
+  fi
   if is_running; then
     if [ -p ${FIFO} ]; then
-      cmdid="FACTORIO_INIT_CMD_DELIMITER"
-      # Whisper that unknown player
-      echo "/w ${cmdid}" > ${FIFO}
-      # Wait for factorio to read stdin
-      sleep 1
+      # Generate two unique log markers
+      TIMESTAMP=$(date +"%s")
+      START="FACTORIO_INIT_CMD_${TIMESTAMP}_START"
+      END="FACTORIO_INIT_CMD_${TIMESTAMP}_END"
+
+      # Whisper that unknown player to place start marker in log
+      echo "/w $START" > ${FIFO}
       # Run the actual command
       echo $@ > ${FIFO}
-      # Wait again, this might need more sleep for larger command output - time will tell (sorry future self for any head aches)
-      sleep 1
-      # Read the output file backwards - capture everything between the end of file until
-      # factorio tells us our random command id player does not exist.
-      # This also attempts to filter all non chat/command lines from the output
-      response=$(sed "/Player ${cmdid} doesn't exist./q" <(tac ${CMDOUT}) |egrep -v "(${cmdid})|${NONCMDPATTERN}")
-      echo "${response}"
+      # Whisper that unknown player again to place end marker in log after the command terminated
+      echo "/w $END" > ${FIFO}
+
+      if [ ${NEED_OUTPUT} -eq 1 ]; then
+        # search for the start marker in the log file, then follow and print the log output in real time until the end marker is found
+        sleep 1
+        awk "/Player $START doesn't exist./{flag=1;next}/Player $END doesn't exist./{exit}flag" < ${CMDOUT}
+      fi
     else
       echo "${FIFO} is not a pipe!"
       return 1
@@ -268,7 +317,7 @@ send_cmd(){
 }
 
 cmd_players(){
-  players=$(send_cmd "/p")
+  players=$(send_cmd -o "/p")
   if [ -z "${players}" ]; then
     echo "No players found!"
     return 1
@@ -282,8 +331,8 @@ cmd_players(){
 }
 
 check_permissions(){
-  if [ ! -e "${BINARY}" ]; then
-    echo "Can't find ${BINARY}. Please check your config!"
+  if [ ! -e "${BINARYB}" ]; then
+    echo "Can't find ${BINARYB}. Please check your config!"
     exit 1
   fi
 
@@ -379,7 +428,7 @@ install(){
   fi
 
   # Generate default config.ini by creating a save
-  as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save"
+  as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}"
   if [ $? -eq 0 ]; then
     echo "Installation complete, edit data/server-settings.json and start your server"
     exit 0
@@ -423,7 +472,14 @@ update(){
     UPDATE_TMPDIR=/tmp
   fi
 
-  tmpdir="${UPDATE_TMPDIR}/factorio-update"
+  # Create tmpdir and ensure automatic cleanup
+  tmpdir=`as_user "mktemp -d -p ${UPDATE_TMPDIR} factorio-update.XXXXXXXXXX"`
+  if [ $? -ne 0 ]; then
+    echo "Aborting update! Unable to create tmpdir: ${tmpdir}"
+    exit 1
+  fi
+  trap "rm -rf ${tmpdir}" EXIT
+    
   invocation="python ${UPDATE_SCRIPT} --for-version ${version} --package ${package} --output-path ${tmpdir}"
   if [ ${UPDATE_EXPERIMENTAL} -gt 0 ]; then
     invocation="${invocation} --experimental"
@@ -464,21 +520,9 @@ update(){
     exit 0
   fi
 
-  if [ -e ${tmpdir} ]; then
-    echo "Aborting update! Temporary directory already exists ${tmpdir}"
-    echo "Remnants from a previously failed update?"
-    exit 1
-  fi
-
-  if ! as_user "mkdir -p ${tmpdir}"; then
-    echo "Aborting update! Unable to create tmpdir: ${tmpdir}"
-    exit 1
-  fi
-
   # Time to download the updates
   if ! as_user "${invocation}"; then
     echo "Aborting update!"
-    rm -rf ${tmpdir}
     exit 1
   fi
 
@@ -492,14 +536,14 @@ update(){
 
   for patch in $(find ${tmpdir} -type f -name "*.zip" | sort -V); do
     echo "Applying ${patch} ..."
-    result=`as_user "$BINARY --apply-update ${patch}"`
+    result=`as_user "$BINARY --apply-update ${patch} ${EXE_ARGS_GLIBC}"`
     exitcode=$?
     if [ $exitcode -gt 0 ]; then
       echo "${result}"
       echo
       echo "Error! Failed to apply update"
       echo "You can try to apply it manually with:"
-      echo "su ${USERNAME} -c \"${BINARY} --apply-update ${patch}\""
+      echo "su ${USERNAME} -c \"${BINARY} --apply-update ${patch} ${EXE_ARGS_GLIBC}\""
       exit 1
     fi
   done
@@ -510,7 +554,6 @@ update(){
   fi
 
   echo "Successfully updated factorio"
-  rm -rf ${tmpdir}
 }
 
 case "$1" in
@@ -622,7 +665,7 @@ case "$1" in
     # Check if user wants to use custom map gen settings
     if [ $3 ]; then
       if [ -e "${WRITE_DIR}/$3" ]; then
-        createsavecmd="$createsavecmd --map-gen-settings=${WRITE_DIR}/$3"
+        createsavecmd="$createsavecmd --map-gen-settings=${WRITE_DIR}/$3 ${EXE_ARGS_GLIBC}"
       else
         echo "Specified map gen settings json does not exist"
         exit 1
@@ -632,7 +675,7 @@ case "$1" in
     # Check if user wants to use custom map settings
     if [ $4 ]; then
       if [ -e "${WRITE_DIR}/$4" ]; then
-        createsavecmd="$createsavecmd --map-settings=${WRITE_DIR}/$4"
+        createsavecmd="$createsavecmd --map-settings=${WRITE_DIR}/$4 ${EXE_ARGS_GLIBC}"
       else
         echo "Specified map settings json does not exist"
         exit 1
@@ -715,6 +758,10 @@ case "$1" in
     ;;
   version)
     echo `get_bin_version`
+    ;;
+  source)
+    # do not call `exit` and just return successfully, so that other scripts (possibly with set -e) may source this script to import all out variables and functions
+    return 0
     ;;
   *)
     echo "No such command!"

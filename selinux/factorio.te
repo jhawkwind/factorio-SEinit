@@ -1,0 +1,107 @@
+policy_module(factorio, 1.1.0)
+
+########################################
+#
+# Declarations
+#
+
+type factorio_t;
+type factorio_exec_t;
+init_daemon_domain(factorio_t, factorio_exec_t)
+
+# You can uncomment this line and re-compile the module to debug permission issues.
+# permissive factorio_t;
+
+########################################
+#
+# factorio local policy
+#
+
+require {
+        type factorio_t;
+        type default_t;
+	type unconfined_service_t;
+	type unconfined_t;
+	type ld_so_t;
+	type init_t;
+	type initrc_t;
+	type su_exec_t;
+        class file { append create execute getattr ioctl lock open read rename setattr unlink write };
+        class process setcap;
+        class capability net_raw;
+        class tcp_socket { connect create getattr getopt setopt };
+        class fifo_file { getattr open read write };
+        class rawip_socket { create getopt setopt };
+        class netlink_route_socket { bind create getattr nlmsg_read write read };
+        class udp_socket { bind connect create getattr setopt };
+}
+
+#============= unconfined_service_t ==============
+# Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
+allow unconfined_t factorio_t:file { relabelto relabelfrom };
+allow unconfined_t factorio_t:dir { relabelto relabelfrom };
+
+# Audit transitions
+auditallow initrc_t factorio_t:process { transition }; # SystemD bootup is from initrc_t
+auditallow unconfined_service_t factorio_t:process { transition }; # manual service startup is from unconfined_service_t
+auditallow unconfined_t factorio_t:process { transition }; # User manual command line is from unconfined_t
+auditallow factorio_t shell_exec_t:file { entrypoint }; # Audit entry to domain from shell command
+
+# Allow transititions
+allow initrc_t factorio_t:process { transition };
+allow unconfined_service_t factorio_t:process { transition };
+allow unconfined_t factorio_t:process { transition };
+
+# Allow execution
+allow initrc_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
+allow unconfined_service_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
+allow unconfined_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
+allow initrc_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
+allow unconfined_service_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
+allow unconfined_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
+
+# Allow entry point
+allow factorio_t ld_so_t:file { entrypoint }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
+allow factorio_t factorio_exec_t:file { entrypoint }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
+allow factorio_t shell_exec_t:file { entrypoint }; # Through the execution of a shell command
+corecmd_bin_entry_type( factorio_t ); # Through any /usr/bin or /sbin in the case of touch, test, whoami, and other functions.
+
+#============= factorio_t ==============
+allow factorio_t unconfined_t:process { signal sigchld }; # Allow the factorio process to talk back to the init script.
+allow factorio_t unconfined_t:fifo_file { write getattr }; # Allow the factorio process to write output results back to the init script to pass up. In this case, tail.
+allow factorio_t unconfined_service_t:process { signal sigchld }; # Allow the factorio process to talk back to the init script.
+allow factorio_t unconfined_service_t:fifo_file { write getattr }; # Allow the factorio process to write output results back to the init script to pass up. In this case, tail.
+
+allow factorio_t self:fifo_file rw_fifo_file_perms;
+allow factorio_t self:unix_stream_socket create_stream_socket_perms;
+allow factorio_t default_t:fifo_file { getattr open read write };
+allow factorio_t self:fifo_file rw_fifo_file_perms;
+allow factorio_t self:unix_stream_socket create_stream_socket_perms;
+allow factorio_t self:file rw_file_perms;
+allow factorio_t self:dir rw_dir_perms;
+allow factorio_t self:file { getattr unlink append read setattr write lock create rename link open }; # Redundant plus some additional
+allow factorio_t self:dir { getattr unlink append read setattr write lock create rename link search rmdir remove_name add_name open }; # Redundant plus some additional
+allow factorio_t self:capability net_raw;
+allow factorio_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
+allow factorio_t self:process setcap;
+allow factorio_t self:rawip_socket { create getopt setopt };
+allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
+allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
+allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
+corecmd_exec_bin(factorio_t);
+corecmd_exec_shell(factorio_t);
+corenet_tcp_connect_http_port(factorio_t);
+corenet_udp_bind_generic_node(factorio_t);
+files_manage_default_dirs(factorio_t);
+fs_getattr_xattr_fs(factorio_t);
+kernel_read_system_state(factorio_t);
+netutils_exec_ping(factorio_t);
+files_exec_usr_files(factorio_t);
+files_read_etc_files(factorio_t);
+miscfiles_read_localization(factorio_t);
+sysnet_read_config(factorio_t);
+kernel_read_system_state(factorio_t);
+miscfiles_read_generic_certs(factorio_t);
+fs_noxattr_type(factorio_t)
+
+

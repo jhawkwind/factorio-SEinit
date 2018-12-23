@@ -4,6 +4,13 @@
 # this script is not behaving the way you expect it to do
 DEBUG=0
 
+# Enable alternative glibc directory for systems using older glibc versions ( ie RHEL CentOS and others )
+ALT_GLIBC=0
+# Put the Absolute path to the side by side glibc root here
+ALT_GLIBC_DIR="/opt/glibc-2.18"
+#Version of alt glibc goes here (i.e 2.18)
+ALT_GLIBC_VER="2.18"
+
 # What do you want to call this service?
 SERVICE_NAME="Factorio"
 
@@ -24,6 +31,11 @@ PORT=34197
 # Setting this to 0 will cause the script to erase the log file on each start
 # If you set this to 1 you might want to apply logrotate on the log or it will eventually fill your disk
 SAVELOG=0
+
+# Delay starting the game server until the we confirm the pingpong servers are reachable.
+# This makes sure that game server detects the correct external IP in a NAT setup.
+# Useful for Cloud providers where VMs may start faster than their Internet connectivity is plumbed.
+WAIT_PINGPONG=0
 
 # Factorio comes packaged in a tarball containing the directory named "factorio"
 # when using this scripts update/install command we expect to see this very
@@ -55,3 +67,7 @@ UPDATE_TMPDIR=/tmp
 # Extras
 # Additional binary arguments, these will be sent to the binary when issuing the "start" command
 EXTRA_BINARGS=""
+
+# Security Enhanced Linux (SELINUX)
+# Set to 1 if SELINUX is installed, configured, enforcing, and the Factorio policy is installed. Otherwise, 0.
+SELINUX=0
