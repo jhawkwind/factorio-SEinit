@@ -48,7 +48,7 @@ This is a fork of https://github.com/Bisa/factorio-init
 
  ```bash
  $ cd '/opt'
- $ git clone https://github.com/Bisa/factorio-init.git
+ $ git clone https://github.com/jhawkwind/factorio-SEinit
  ```
 - Rename config.example to config and modify the values within according to your setup.
 
