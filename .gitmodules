@@ -1,0 +1,4 @@
+[submodule "glibc"]
+	path = glibc
+	url = git://sourceware.org/git/glibc.git
+	branch = release/2.18/master
