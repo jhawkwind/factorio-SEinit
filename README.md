@@ -95,6 +95,8 @@ make install
   ```
 - Compiling the module by hand:
   ```bash
+  yum install policycoreutils-python policycoreutils-devel setools-console
+  cd /opt/factorio-SEinit/selinux
   make -f /usr/share/selinux/devel/Makefile factorio.pp
   semodule -i factorio.pp
   restorecon -R -v /opt/factorio-SEinit
