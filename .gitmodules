@@ -1,0 +1,7 @@
+[submodule "glibc"]
+	path = glibc
+	url = git://sourceware.org/git/glibc.git
+	branch = release/2.18/master
+[submodule "factorio-updater"]
+	path = factorio-updater
+	url = https://github.com/narc0tiq/factorio-updater.git

@@ -5,7 +5,7 @@
 DEBUG=0
 
 # Enable alternative glibc directory for systems using older glibc versions ( ie RHEL CentOS and others )
-ALT_GLIBC=0
+ALT_GLIBC=1
 # Put the Absolute path to the side by side glibc root here
 ALT_GLIBC_DIR="/opt/glibc-2.18"
 #Version of alt glibc goes here (i.e 2.18)
@@ -54,8 +54,8 @@ PACKAGE_DIR_NAME=factorio
 # git clone https://github.com/narc0tiq/factorio-updater
 #
 
-# absolute path to the factorio-updater script
-UPDATE_SCRIPT=/path/to/update_factorio.py
+# absolute path to the factorio-updater script. Change as necessary.
+UPDATE_SCRIPT=/opt/factorio-SEinit/factorio-updater/update_factorio.py
 # Note that if you set HEADLESS=1 the username/token will not be used as the headless
 # download is provided free of charge
 HEADLESS=1
