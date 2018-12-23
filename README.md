@@ -42,9 +42,9 @@ This is a fork of https://github.com/Bisa/factorio-init
  - Try running the same commands as the factorio user (`/opt/factorio-SEinit/factorio invocation` will tell you what the factorio user tries to run at start)
 
  ```bash
- $ /opt/factorio-SEinit/factorio invocation
+ /opt/factorio-SEinit/factorio invocation
  #  Run this as the factorio user, example:
- $ sudo -u factorio 'whatever invocation gave you'
+ sudo -u factorio 'whatever invocation gave you'
  # You should see some output in your terminal here, hopefully giving
  # you a hint of what is going wrong
  ```
@@ -53,9 +53,9 @@ This is a fork of https://github.com/Bisa/factorio-init
 - Create a directory where you want to store this script along with configuration. (either copy-paste the files or clone from github):
 
  ```bash
- $ yum install git
- $ cd '/opt'
- $ git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit
+ yum install git
+ cd '/opt'
+ git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit
  ```
 - Rename config.example to config and modify the values within according to your setup.
 
@@ -89,40 +89,42 @@ make install
         * ld-2.18.so
 - Via the RPM, just run:
   ```bash
-  $ rpm -Uvh /opt/factorio-SEinit/selinux/Factorio-SEinit-1.1-0.el7.src.rpm
-  $ restorecon -R -v /opt/factorio-SEinit
-  $ restorecon -R -v /opt/glibc-2.18
+  rpm -Uvh /opt/factorio-SEinit/selinux/Factorio-SEinit-1.1-0.el7.src.rpm
+  restorecon -R -v /opt/factorio-SEinit
+  restorecon -R -v /opt/glibc-2.18
   ```
 - Compiling the module by hand:
   ```bash
-  $ make -f /usr/share/selinux/devel/Makefile factorio.pp
-  $ semodule -i factorio.pp
-  $ restorecon -R -v /opt/factorio-SEinit
-  $ restorecon -R -v /opt/glibc-2.18
+  make -f /usr/share/selinux/devel/Makefile factorio.pp
+  semodule -i factorio.pp
+  restorecon -R -v /opt/factorio-SEinit
+  restorecon -R -v /opt/glibc-2.18
   ```
 
 ## First-run
 - If you don't have Factorio installed already, use the `install` command:
 
  ```bash
- $ useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -Z system_u -r factorio
- $ /opt/factorio-SEinit/factorio install  # see help for options
+ useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -Z system_u -r factorio
+ /opt/factorio-SEinit/factorio install  # see help for options
  ```
 
 - The installation routine creates Factorio's `config.ini` automatically.
 
 - If you previously ran Factorio without this script, the existing `config.ini` should work fine, just apply the security contexts:
   ```bash
-  $ restorecon -R -v /opt/factorio
+  restorecon -R -v /opt/factorio
   ```
 
 ## Autocompletion
 - Copy/Symlink or source the bash_autocompletion file
 
  ```bash
- $ ln -s /opt/factorio-SEinit/bash_autocomplete /etc/bash_completion.d/factorio
- # OR:
- $ echo "source /opt/factorio-SEinit/bash_autocomplete" >> ~/.bashrc
+ ln -s /opt/factorio-SEinit/bash_autocomplete /etc/bash_completion.d/factorio
+ ```
+ OR:
+ ```bash
+ echo "source /opt/factorio-SEinit/bash_autocomplete" >> ~/.bashrc
  # restart your shell to verify that it worked
  ```
 
@@ -130,18 +132,18 @@ make install
 - Copy the example service, adjust & reload
 
  ```bash
- $ cp /opt/factorio-SEinit/factorio.service.example /etc/systemd/system/factorio.service
+ cp /opt/factorio-SEinit/factorio.service.example /etc/systemd/system/factorio.service
  # Edit the service file to suit your environment then reload systemd
- $ systemctl daemon-reload
+ systemctl daemon-reload
  ```
 
 - Verify that the server starts
 
  ```bash
- $ systemctl start factorio
- $ systemctl status -l factorio
+ systemctl start factorio
+ systemctl status -l factorio
  # Remember to enable the service at startup if you want that:
- $ systemctl enable factorio
+ systemctl enable factorio
  ```
 
 # Thank You
