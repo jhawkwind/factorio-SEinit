@@ -156,6 +156,23 @@ make install
  # Remember to enable the service at startup if you want that:
  systemctl enable factorio
  ```
+ 
+ ## Clean up
+ - You know we just installed a bunch of stuff earlier? This yum command should remove everything we no longer need:
+ ```bash
+ yum remove glibc-devel gcc gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel libsepol-devel pcre-devel libstdc++-devel git setools-console policycoreutils-devel perl-Git mpfr libmpc kernel-headers glibc-headers cpp m4 selinux-policy-devel
+ ```
+ - You can resecure the _umask_ with `umask 0077`
+ 
+ ### Firewall?
+ -
+ ```bash
+ firewall-cmd --new-service=factorio-multiplayer --permanent
+ firewall-cmd --service=factorio-multiplayer --description="Factorio multi-player lock step sychronization replication protocol" --permanent
+ firewall-cmd --service=factorio-multiplayer --add-port=34197/udp --permanent
+ firewall-cmd --add-service=factorio-multiplayer --permanent
+ firewall-cmd --reload
+ ```
 
 # Thank You
 - To all who find this script useful in one way or the other
