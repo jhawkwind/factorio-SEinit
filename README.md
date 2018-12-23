@@ -24,6 +24,7 @@ This is a fork of https://github.com/Bisa/factorio-init
      - make - Required to recompile.
    - **REQUIRED to debug the policy**
      - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
+     - _setools-console_ package - Required if debugging, optional in other cases.
 
 
 # Debugging

@@ -42,22 +42,28 @@ allow unconfined_t factorio_t:file { relabelto relabelfrom };
 allow unconfined_t factorio_t:dir { relabelto relabelfrom };
 
 # Audit transitions
-auditallow unconfined_service_t factorio_t:process { transition };
-auditallow unconfined_t factorio_t:process { transition };
+auditallow initrc_t factorio_t:process { transition }; # SystemD bootup is from initrc_t
+auditallow unconfined_service_t factorio_t:process { transition }; # manual service startup is from unconfined_service_t
+auditallow unconfined_t factorio_t:process { transition }; # User manual command line is from unconfined_t
+auditallow factorio_t shell_exec_t:file { entrypoint }; # Audit entry to domain from shell command
 
 # Allow transititions
+allow initrc_t factorio_t:process { transition };
 allow unconfined_service_t factorio_t:process { transition };
 allow unconfined_t factorio_t:process { transition };
 
 # Allow execution
+allow initrc_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
 allow unconfined_service_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
 allow unconfined_t ld_so_t:file { execute read open getattr }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
+allow initrc_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
 allow unconfined_service_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
 allow unconfined_t factorio_exec_t:file { execute read open getattr }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
 
 # Allow entry point
 allow factorio_t ld_so_t:file { entrypoint }; # Through the ld_so_t of /opt/glibc-2.18/lib/ld-2.18.so
 allow factorio_t factorio_exec_t:file { entrypoint }; # Through the execution of factorio itself at /opt/factorio/bin/x64/factorio
+allow factorio_t shell_exec_t:file { entrypoint }; # Through the execution of a shell command
 corecmd_bin_entry_type( factorio_t ); # Through any /usr/bin or /sbin in the case of touch, test, whoami, and other functions.
 
 #============= factorio_t ==============
