@@ -110,7 +110,7 @@ make install
 - If you don't have Factorio installed already, use the `install` command:
 
  ```bash
- useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -Z system_u -r factorio
+ useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -r factorio
  /opt/factorio-SEinit/factorio install  # see help for options
  ```
 
