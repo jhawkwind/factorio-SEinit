@@ -154,7 +154,7 @@ make install
 # Thank You
 - To all who find this script useful in one way or the other
 - A big thank you to [Wube](https://www.factorio.com/team) for making [Factorio](https://www.factorio.com/)
-- A special thanks to NoPantsMcDance, Oxyd, HanziQ, TheFactorioCube and all other frequent users of the [#factorio](irc://irc.esper.net/#factorio) channel @ esper.net
+- A special thanks to NoPantsMcDance, Oxyd, HanziQ, TheFactorioCube and all other frequent users of the [**#factorio**](irc://irc.esper.net/#factorio) channel @ esper.net
 - Thank you to Salzig for pointing Bisa in the right direction when it comes to input redirection
 - The user _millisa_ over on the [factorio forums](https://forums.factorio.com/viewtopic.php?t=54654#p324493) for creating a wonderful guide to follow on making an alternate glibc root.
 - Please report any [(SE)init issues](https://github.com/jhawkwind/factorio-SEinit/issues) you find.
