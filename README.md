@@ -13,6 +13,15 @@ This is a fork of https://github.com/Bisa/factorio-init
 # Dependencies
  Among others:
  - cURL
+ - git
+ - glibc-devel
+ - glibc
+ - make
+ - gcc-c++ - C++ component for glibc (optional)
+ - texinfo - documentation output for glibc
+ - libselinux-devel - SELINUX aware glibc
+ - audit-libs-devel - SELINUX auditing aware
+ - libcap-devel - root privileges partitioning for glibc
 
 ## SELINUX Dependencies
    - **REQUIRED**
@@ -20,10 +29,8 @@ This is a fork of https://github.com/Bisa/factorio-init
      - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
      - _coreutils_ package - Required in all cases.
      - _policycoreutils_ package - Required in all cases.
-   - **REQUIRED if small changes or recompiling only**
+   - **REQUIRED if small changes or recompiling only** - You will not need this if you use the RPM.
      - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
-     - gcc - Required to recompile. 
-     - make - Required to recompile.
      - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
      - _setools-console_ package - Required if debugging, optional in other cases.
 
@@ -32,10 +39,10 @@ This is a fork of https://github.com/Bisa/factorio-init
  If you find yourself wondering why stuff is not working the way you expect:
  - Check the logs, I suggest you `tail -f /opt/factorio/factorio-current.log` in a separate session
  - Enable debugging in the config and/or:
- - Try running the same commands as the factorio user (`/opt/factorio-init/factorio invocation` will tell you what the factorio user tries to run at start)
+ - Try running the same commands as the factorio user (`/opt/factorio-SEinit/factorio invocation` will tell you what the factorio user tries to run at start)
 
  ```bash
- $ /opt/factorio-init/factorio invocation
+ $ /opt/factorio-SEinit/factorio invocation
  #  Run this as the factorio user, example:
  $ sudo -u factorio 'whatever invocation gave you'
  # You should see some output in your terminal here, hopefully giving
@@ -46,10 +53,27 @@ This is a fork of https://github.com/Bisa/factorio-init
 - Create a directory where you want to store this script along with configuration. (either copy-paste the files or clone from github):
 
  ```bash
+ $ yum install git
  $ cd '/opt'
- $ git clone https://github.com/jhawkwind/factorio-SEinit
+ $ git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit
  ```
 - Rename config.example to config and modify the values within according to your setup.
+
+## Notes for users with CentOS 7 that has a older glibc version:
+
+- The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
+https://forums.factorio.com/viewtopic.php?t=54654#p324493
+
+```bash
+yum install glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel
+cd ./glibc
+git apply ../patches/test-installation.pl.patch
+mkdir glibc-build
+cd glibc-build
+../configure --prefix='/opt/glibc-2.18' --with-selinux
+make
+make install
+```
 
 ## SELINUX Enablement
 - You must set `SELINUX=1` in the **config** file to have the init script change context into the **factorio_t** domain.
@@ -59,55 +83,46 @@ This is a fork of https://github.com/Bisa/factorio-init
 - File location format:
   * /opt (or /data)
     * /factorio/
-    * /factorio-init/
+    * /factorio-SEinit/
     * /glibc-2.18/
       * lib/
         * ld-2.18.so
-- Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
+- Via the RPM, just run:
+  ```bash
+  $ rpm -Uvh /opt/factorio-SEinit/selinux/Factorio-SEinit-1.1-0.el7.src.rpm
+  $ restorecon -R -v /opt/factorio-SEinit
+  $ restorecon -R -v /opt/glibc-2.18
+  ```
 - Compiling the module by hand:
   ```bash
-  [root@localhost]$ checkmodule -M -m -o factorio.mod factorio.te
-  [root@localhost]$ semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
-  [root@localhost]$ semodule -i factorio.pp
-  [root@localhost]$ restorecon -R -v /opt/factorio
-  [root@localhost]$ restorecon -R -v /opt/factorio-init
-  [root@localhost]$ restorecon -R -v /opt/glibc-2.18
+  $ make -f /usr/share/selinux/devel/Makefile factorio.pp
+  $ semodule -i factorio.pp
+  $ restorecon -R -v /opt/factorio-SEinit
+  $ restorecon -R -v /opt/glibc-2.18
   ```
-
-## Notes for users with CentOS 7 that has a older glibc version:
-
-- The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
-https://forums.factorio.com/viewtopic.php?t=54654#p324493
-
-```bash
-yum install glibc-devel glibc
-cd ./glibc
-git apply ../patches/test-installation.pl.patch
-mkdir glibc-build
-cd glibc-build
-../configure --prefix='/opt/glibc-2.18'
-make
-make install
-```
 
 ## First-run
 - If you don't have Factorio installed already, use the `install` command:
 
  ```bash
- $ /opt/factorio-init/factorio install  # see help for options
+ $ useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -Z system_u -r factorio
+ $ /opt/factorio-SEinit/factorio install  # see help for options
  ```
 
 - The installation routine creates Factorio's `config.ini` automatically.
 
-- If you previously ran Factorio without this script, the existing `config.ini` should work fine.
+- If you previously ran Factorio without this script, the existing `config.ini` should work fine, just apply the security contexts:
+  ```bash
+  $ restorecon -R -v /opt/factorio
+  ```
 
 ## Autocompletion
 - Copy/Symlink or source the bash_autocompletion file
 
  ```bash
- $ ln -s /opt/factorio-init/bash_autocomplete /etc/bash_completion.d/factorio
+ $ ln -s /opt/factorio-SEinit/bash_autocomplete /etc/bash_completion.d/factorio
  # OR:
- $ echo "source /opt/factorio-init/bash_autocomplete" >> ~/.bashrc
+ $ echo "source /opt/factorio-SEinit/bash_autocomplete" >> ~/.bashrc
  # restart your shell to verify that it worked
  ```
 
@@ -115,7 +130,7 @@ make install
 - Copy the example service, adjust & reload
 
  ```bash
- $ cp /opt/factorio-init/factorio.service.example /etc/systemd/system/factorio.service
+ $ cp /opt/factorio-SEinit/factorio.service.example /etc/systemd/system/factorio.service
  # Edit the service file to suit your environment then reload systemd
  $ systemctl daemon-reload
  ```

@@ -363,6 +363,22 @@ test_deps(){
   return 0 # TODO: Implement ldd check on $BINARY
 }
 
+set_perms(){
+  echo "Applying file ownership ..."
+  if [! $(chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH}) ]; then
+    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
+  if [ ${SELINUX} -eq 1 ]; then
+  	echo "Applying SELINUX security contexts ..."
+  	if [ ! $(restorecon -R -v ${FACTORIO_PATH}) ]; then
+  		echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
+  		exit 1
+  	fi
+  fi
+}
+
 install(){
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
@@ -420,12 +436,8 @@ install(){
       exit 1
     fi
   fi
-
-  echo "Applying file ownership ..."
-  if ! chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH}; then
-    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
-    exit 1
-  fi
+  
+  set_perms; # Set file permissions
 
   # Generate default config.ini by creating a save
   as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}"
