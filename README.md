@@ -49,6 +49,9 @@ This is a fork of https://github.com/Bisa/factorio-init
  # you a hint of what is going wrong
  ```
 
+- You may need to study the audit logs at `/var/log/audit/audit.log` and see what is being blocked.
+- You may need to disable the `dontaudit` flag and force auditing to get the output to the audit log with more answers: `semodule --disable_dontaudit --build`
+
 # Install
 - Create a directory where you want to store this script along with configuration. Cloning from github assuming **/opt/factorio-SEinit** as the directory:
 
@@ -79,7 +82,7 @@ make install
 - You must set `SELINUX=1` in the **config** file to have the init script change context into the **factorio_t** domain.
 - The policy expects you to have the INIT script, Factorio, and GLIBC-2.18 in either **/opt** or **/data**. If you put them
   anywhere else, you will need to modify **selinux/factorio.fc** and (of course) the **config** to tell it the new locations,
-  and manually compilie and install the SELINUX policy modules.
+  and manually compile and install the SELINUX policy modules.
 - File location format:
   * /opt (or /data)
     * /factorio/
@@ -152,9 +155,10 @@ make install
 - To all who find this script useful in one way or the other
 - A big thank you to [Wube](https://www.factorio.com/team) for making [Factorio](https://www.factorio.com/)
 - A special thanks to NoPantsMcDance, Oxyd, HanziQ, TheFactorioCube and all other frequent users of the [#factorio](irc://irc.esper.net/#factorio) channel @ esper.net
-- Thank you to Salzig for pointing me in the right direction when it comes to input redirection
--  The user _millisa_ over on the factorio forums for creating a wonderful guide to follow on making an alternate glibc root. (https://forums.factorio.com/viewtopic.php?t=54654#p324493)
-- At last, but not least; Thank you to all [contributors](https://github.com/Bisa/factorio-init/graphs/contributors) and users posting [issues](https://github.com/Bisa/factorio-init/issues) in my [github](https://github.com/Bisa/factorio-init/) project or on the [factorio forums](https://forums.factorio.com/viewtopic.php?f=133&t=13874)
+- Thank you to Salzig for pointing Bisa in the right direction when it comes to input redirection
+- The user _millisa_ over on the [factorio forums](https://forums.factorio.com/viewtopic.php?t=54654#p324493) for creating a wonderful guide to follow on making an alternate glibc root.
+- Please report any [(SE)init issues](https://github.com/jhawkwind/factorio-SEinit/issues) you find.
+- At last, but not least; Thank you to all [(SE)init contributors](https://github.com/jhawkwind/factorio-SEinit/graphs/contributors) and users posting [mainline issues](https://github.com/Bisa/factorio-init/issues) in Bisa's original [github](https://github.com/Bisa/factorio-init/) project or on the [factorio forums](https://forums.factorio.com/viewtopic.php?f=133&t=13874)
 
 You are all a great source of motivation, thank you.
 
