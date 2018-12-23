@@ -24,7 +24,6 @@ This is a fork of https://github.com/Bisa/factorio-init
      - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
      - gcc - Required to recompile. 
      - make - Required to recompile.
-   - **REQUIRED to debug the policy**
      - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
      - _setools-console_ package - Required if debugging, optional in other cases.
 
@@ -65,7 +64,7 @@ This is a fork of https://github.com/Bisa/factorio-init
       * lib/
         * ld-2.18.so
 - Via the RPM, just run `rpm -Uvh Factorio-SEinit-1.1-0.el7.src.rpm`
-- Compiling the module by hand without SELINUX devtools:
+- Compiling the module by hand:
   ```bash
   [root@localhost]$ checkmodule -M -m -o factorio.mod factorio.te
   [root@localhost]$ semodule_package -o factorio.pp -m factorio.mod -f factorio.fc
@@ -79,6 +78,36 @@ This is a fork of https://github.com/Bisa/factorio-init
 
 - The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
 https://forums.factorio.com/viewtopic.php?t=54654#p324493
+
+```bash
+yum install glibc-devel glibc
+cd /tmp
+git clone git://sourceware.org/git/glibc.git
+cd glibc
+git checkout release/2.18/master
+mkdir glibc-build
+cd glibc-build
+../configure --prefix='/opt/glibc-2.18'
+```
+Fix the test script
+fix line 179 of the test install script:
+```
+vi ../scripts/test-installation.pl
+```
+change from
+```perl
+if (/$ld_so_name/) {
+```
+change to
+```
+if (/\Q$ld_so_name\E/) { 
+```
+save the changes, then run the command to build and install
+```
+make
+make install
+```
+
 
 ## First-run
 - If you don't have Factorio installed already, use the `install` command:
