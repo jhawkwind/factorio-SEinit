@@ -23,7 +23,7 @@ This is a fork of https://github.com/Bisa/factorio-init
  - audit-libs-devel - SELINUX auditing aware
  - libcap-devel - root privileges partitioning for glibc
 
-## SELINUX Dependencies
+## SELINUX specific dependencies
    - **REQUIRED**
      - SELINUX installed and enabled.
      - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
@@ -50,23 +50,23 @@ This is a fork of https://github.com/Bisa/factorio-init
  ```
 
 # Install
-- Create a directory where you want to store this script along with configuration. (either copy-paste the files or clone from github):
+- Create a directory where you want to store this script along with configuration. Cloning from github assuming **/opt/factorio-SEinit** as the directory:
 
  ```bash
  yum install git
  cd '/opt'
  git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit
  ```
-- Rename config.example to config and modify the values within according to your setup.
+ 
+- Rename **/opt/factorio-SEinit/config.example** to **/opt/factorio-SEinit/config** and modify the values within according to your setup.
 
-## Notes for users with CentOS 7 that has a older glibc version:
+## Install appropriate glibc version as required for CentOS 7
 
-- The config has options for declaring a alternate glibc root. The user millisa over on the factorio forums has created a wonderful guide to follow on creating this alternate glibc root ( side by side ) here:
-https://forums.factorio.com/viewtopic.php?t=54654#p324493
-
+- The config has options for declaring an alternate glibc root, don't forget to configure it.
+- Compile the required GLIBC 2.18 and install it side-by-side with the OS version.
 ```bash
 yum install glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel
-cd ./glibc
+cd /opt/factorio-SEinit/glibc
 git apply ../patches/test-installation.pl.patch
 mkdir glibc-build
 cd glibc-build
@@ -93,7 +93,7 @@ make install
   restorecon -R -v /opt/factorio-SEinit
   restorecon -R -v /opt/glibc-2.18
   ```
-- Compiling the module by hand:
+- Compiling the module manually:
   ```bash
   yum install policycoreutils-python policycoreutils-devel setools-console
   cd /opt/factorio-SEinit/selinux
@@ -153,6 +153,7 @@ make install
 - A big thank you to [Wube](https://www.factorio.com/team) for making [Factorio](https://www.factorio.com/)
 - A special thanks to NoPantsMcDance, Oxyd, HanziQ, TheFactorioCube and all other frequent users of the [#factorio](irc://irc.esper.net/#factorio) channel @ esper.net
 - Thank you to Salzig for pointing me in the right direction when it comes to input redirection
+-  The user _millisa_ over on the factorio forums for creating a wonderful guide to follow on making an alternate glibc root. (https://forums.factorio.com/viewtopic.php?t=54654#p324493)
 - At last, but not least; Thank you to all [contributors](https://github.com/Bisa/factorio-init/graphs/contributors) and users posting [issues](https://github.com/Bisa/factorio-init/issues) in my [github](https://github.com/Bisa/factorio-init/) project or on the [factorio forums](https://forums.factorio.com/viewtopic.php?f=133&t=13874)
 
 You are all a great source of motivation, thank you.

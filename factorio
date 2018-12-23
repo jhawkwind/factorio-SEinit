@@ -365,14 +365,14 @@ test_deps(){
 
 set_perms(){
   echo "Applying file ownership ..."
-  if [! $(chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH}) ]; then
+  if ! [ chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH} ]; then
     echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
     exit 1
   fi
  
   if [ ${SELINUX} -eq 1 ]; then
   	echo "Applying SELINUX security contexts ..."
-  	if [ ! $(restorecon -R -v ${FACTORIO_PATH}) ]; then
+  	if ! [ restorecon -R -v ${FACTORIO_PATH} ]; then
   		echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
   		exit 1
   	fi
