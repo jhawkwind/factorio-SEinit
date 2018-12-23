@@ -8,12 +8,12 @@ restorecon -R /data/factorio-init/factorio; \
 
 Name:   Factorio-SEinit
 Version:	1.1
-Release:	0%{?dist}
+Release:	3%{?dist}
 Summary:	SELinux policy module for Factorio and Factorio-init for CentOS/RHEL 7
 
 Group:	System Environment/Base		
 License:	MIT
-URL:		https://github.com/jhawkwind/factorio-init
+URL:		https://github.com/jhawkwind/factorio-SEinit
 Source0:	factorio.pp
 Source1:	factorio.if
 Source2:	factorio_selinux.8
@@ -22,7 +22,7 @@ Source2:	factorio_selinux.8
 Requires: policycoreutils, libselinux-utils
 Requires(post): selinux-policy-base >= %{selinux_policyver}, policycoreutils
 Requires(postun): policycoreutils
-BuildArch: x86_64
+BuildArch: noarch
 
 %description
 This package installs and sets up the SELinux policy security module for factorio.

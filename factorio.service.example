@@ -13,9 +13,9 @@ PIDFile=/opt/factorio/server.pid
 
 Type=forking
 TimeoutStartSec=20
-ExecStart=/opt/factorio-init/factorio start
+ExecStart=/opt/factorio-SEinit/factorio start
 TimeoutStopSec=20
-ExecStop=/opt/factorio-init/factorio stop
+ExecStop=/opt/factorio-SEinit/factorio stop
 RestartSec=20
 Restart=on-failure
 
