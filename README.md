@@ -51,6 +51,7 @@ This is a fork of https://github.com/Bisa/factorio-init
 
 - You may need to study the audit logs at `/var/log/audit/audit.log` and see what is being blocked.
 - You may need to disable the `dontaudit` flag and force auditing to get the output to the audit log with more answers: `semodule --disable_dontaudit --build`
+- If you followed hardening guides, you may need to adjust the *umask* temporarily `umask 022` to the default, or run `find /opt/glibc-2.18 -type d -exec chmod 755 {} \;`
 
 # Install
 - Create a directory where you want to store this script along with configuration. Cloning from github assuming **/opt/factorio-SEinit** as the directory:

@@ -371,6 +371,13 @@ set_perms(){
     exit 1
   fi
  
+  echo "Applying file permission ..."
+  result=$(find ${FACTORIO_PATH} -type d -exec chmod 755 {} \;)
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply permission for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
   if [[ ${SELINUX} -eq 1 ]]; then
   	echo "Applying SELINUX security contexts ..."
   	result=$(restorecon -R -v ${FACTORIO_PATH})
