@@ -1,5 +1,5 @@
 
-## <summary>policy for factorio</summary>
+## <summary>policy for factorio_init/summary>
 
 ########################################
 ## <summary>
@@ -16,8 +16,8 @@ interface(`factorio_init_domtrans',`
 		type factorio_init_t, factorio_init_exec_t;
 	')
 
-	corecmd_search_bin($1)
-	domtrans_pattern($1, factorio_init_exec_t, factorio_init_t)
+	corecmd_search_bin($1);
+	domtrans_pattern($1, factorio_init_exec_t, factorio_init_t);
 	allow factorio_init_t $1:process { signal }; # Allow misc signals to be sent up.
 	auditallow $1 factorio_init_exec_t:file { entrypoint };
 	auditallow $1 factorio_init_t:process { transition };
@@ -38,8 +38,8 @@ interface(`factorio_init_exec',`
 		type factorio_init_exec_t;
 	')
 
-	corecmd_search_bin($1)
-	can_exec($1, factorio_init_exec_t)
+	corecmd_search_bin($1);
+	can_exec($1, factorio_init_exec_t);
 ')
 
 ######################################
@@ -54,7 +54,7 @@ interface(`factorio_init_exec',`
 #
 interface(`factorio_init_manage_file_dirs',`
 	gen_require(`
-		type factorio_init_t; factorio_init_exec_t; factorio_init_conf_t;
+		type factorio_init_t, factorio_init_exec_t, factorio_init_conf_t;
 	')
 	
 	allow $1 factorio_init_t:dir manage_dir_perms;
@@ -75,10 +75,11 @@ interface(`factorio_init_manage_file_dirs',`
 #
 interface(`factorio_init_relabel_file_dirs',`
 	gen_require(`
-		type factorio_init_t; factorio_init_exec_t; factorio_init_conf_t;
+		type factorio_init_t, factorio_init_exec_t, factorio_init_conf_t;
 	')
 	
 	allow $1 factorio_init_t:dir { relabelto relabelfrom };
 	allow $1 factorio_init_t:file { relabelto relabelfrom };
 	allow $1 factorio_init_exec_t:file { relabelto relabelfrom };
 	allow $1 factorio_init_conf_t:file { relabelto relabelfrom };
+')

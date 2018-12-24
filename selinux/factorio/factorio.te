@@ -9,7 +9,6 @@ type factorio_t;
 type factorio_exec_t;
 type factorio_tmp_t;
 domain_type(factorio_t);
-factorio_exec(factorio_t); # While you are factorio_t, you can execute things in own domain.
 
 
 # You can uncomment this line and re-compile the module to debug permission issues.
@@ -22,28 +21,24 @@ permissive factorio_t;
 #
 
 require {
-        type factorio_t;
-        type default_t;
-		type unconfined_service_t;
 		type unconfined_t;
 		type ld_so_t;
-		type init_t;
-		type initrc_t;
-		type su_exec_t;
-		type shell_exec_t;
+		type tmp_t;
         class file { append create execute getattr ioctl lock open read rename setattr unlink write };
-        class process setcap;
+        class process { setcap entrypoint };
         class capability net_raw;
         class tcp_socket { connect create getattr getopt setopt };
         class fifo_file { getattr open read write };
         class rawip_socket { create getopt setopt };
         class netlink_route_socket { bind create getattr nlmsg_read write read };
         class udp_socket { bind connect create getattr setopt };
+        class dir { getattr execute read search add_name };
 }
 
 #============= Auditing ==============
-auditallow factorio_t factorio_exec_t:file { entrypoint } # add auditing to init_domain()
-factorio_domain_entry_file(factorio_t, ld_so_t); # Do init_domain, but with ld_so_t without re-declaring the domain.
+auditallow factorio_t factorio_exec_t:file { entrypoint }; # add auditing to init_domain()
+auditallow factorio_t ld_so_t:file { entrypoint };
+domain_entry_file(factorio_t, ld_so_t);
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
@@ -51,19 +46,23 @@ factorio_manage_file_dirs(unconfined_t);
 factorio_relabel_file_dirs(unconfined_t);
 factorio_domtrans(unconfined_t);
 factorio_exec(unconfined_t);
+factorio_exec(factorio_t); # While you are factorio_t, you can execute things in own domain.
 
 #============= factorio_t ==============
-#allow factorio_t self:unix_stream_socket create_stream_socket_perms;
-#allow factorio_t self:fifo_file manage_fifo_file_perms;
+allow factorio_t self:unix_stream_socket create_stream_socket_perms;
+allow factorio_t self:fifo_file manage_fifo_file_perms;
 
-factorio_manage_file_dirs(factorio_t);
-
-allow factorio_t tmp_t:dir { getattr execute read search add_name }
+allow factorio_t tmp_t:dir { getattr execute read search add_name };
+allow factorio_t factorio_tmp_t:dir manage_dir_perms;
+allow factorio_t factorio_tmp_t:file manage_file_perms;
 type_transition factorio_t tmp_t:file factorio_tmp_t;
 type_transition factorio_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_t tmp_t:sock_file factorio_tmp_t;
 
+allow factorio_t factorio_exec_t:file manage_file_perms;
+allow factorio_t self:dir manage_dir_perms;
+allow factorio_t self:file manage_file_perms;
 allow factorio_t self:capability net_raw;
 allow factorio_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
 allow factorio_t self:process { setcap };
