@@ -12,7 +12,7 @@ This is a fork of https://github.com/Bisa/factorio-init
 
 # Dependencies
  
- ## Runtime dependencies
+## Runtime dependencies
  - _wget_ package - If you are planning to use the installer.
  - _python-requests_ package - If you are planning to use the updater script. It will likely install the following dependencies:
     - python-backports
@@ -21,7 +21,7 @@ This is a fork of https://github.com/Bisa/factorio-init
     - python-six
     - python-urllib3
     
- ## Build dependencies
+## Build dependencies
  - git
  - glibc-devel
  - glibc
@@ -33,17 +33,20 @@ This is a fork of https://github.com/Bisa/factorio-init
  - libcap-devel - root privileges partitioning for glibc
 
 ## SELINUX specific dependencies
-   ### Runtime dependencies
-     - SELINUX installed and enabled.
-     - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
-     - _coreutils_ package - Required in all cases.
-     - _policycoreutils_ package - Required in all cases.
-   ### Build dependencies
-   You will not need this if you use the RPM.
-     - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
-     - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
-     - _setools-console_ package - Required if debugging, optional in other cases.
 
+### Runtime dependencies
+
+- SELINUX installed and enabled.
+ - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
+ - _coreutils_ package - Required in all cases.
+ - _policycoreutils_ package - Required in all cases.
+
+### Build dependencies
+You will not need this if you use the RPM.
+
+- _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
+- _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
+- _setools-console_ package - Required if debugging, optional in other cases.
 
 # Debugging
  If you find yourself wondering why stuff is not working the way you expect:
