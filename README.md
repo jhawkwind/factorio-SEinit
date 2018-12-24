@@ -11,8 +11,17 @@ This is a fork of https://github.com/Bisa/factorio-init
  * Tighten up policy rules to explicits.
 
 # Dependencies
- Among others:
- - cURL
+ 
+ ## Runtime dependencies
+ - _wget_ package - If you are planning to use the installer.
+ - _python-requests_ package - If you are planning to use the updater script. It will likely install the following dependencies:
+    - python-backports
+    - python-backports-ssl_match_hostname
+    - python-ipaddress
+    - python-six
+    - python-urllib3
+    
+ ## Build dependencies
  - git
  - glibc-devel
  - glibc
@@ -24,12 +33,13 @@ This is a fork of https://github.com/Bisa/factorio-init
  - libcap-devel - root privileges partitioning for glibc
 
 ## SELINUX specific dependencies
-   - **REQUIRED**
+   ### Runtime dependencies
      - SELINUX installed and enabled.
      - `setenforce 1` - If you do not know what this command does, **STOP!** DO NOT PROCEED! Please read up on SELINUX Administration.
      - _coreutils_ package - Required in all cases.
      - _policycoreutils_ package - Required in all cases.
-   - **REQUIRED if small changes or recompiling only** - You will not need this if you use the RPM.
+   ### Build dependencies
+   You will not need this if you use the RPM.
      - _policycoreutils-python_ package - Optional if using RPM. Required if compiling yourself.
      - _policycoreutils-devel_ package - Optional if using RPM or just making small adjustments. Required if debugging.
      - _setools-console_ package - Required if debugging, optional in other cases.
@@ -39,10 +49,10 @@ This is a fork of https://github.com/Bisa/factorio-init
  If you find yourself wondering why stuff is not working the way you expect:
  - Check the logs, I suggest you `tail -f /opt/factorio/factorio-current.log` in a separate session
  - Enable debugging in the config and/or:
- - Try running the same commands as the factorio user (`/opt/factorio-SEinit/factorio invocation` will tell you what the factorio user tries to run at start)
+ - Try running the same commands as the factorio user (`/opt/factorio-init/factorio invocation` will tell you what the factorio user tries to run at start)
 
  ```bash
- /opt/factorio-SEinit/factorio invocation
+ /opt/factorio-init/factorio invocation
  #  Run this as the factorio user, example:
  sudo -u factorio 'whatever invocation gave you'
  # You should see some output in your terminal here, hopefully giving
@@ -54,20 +64,20 @@ This is a fork of https://github.com/Bisa/factorio-init
 - If you followed hardening guides, you may need to adjust the *umask* temporarily back to `umask 022` which was the default, or run:
  ```bash
  find /opt/glibc-2.18 -type d -exec chmod 755 {} \;
- find /opt/factorio-SEinit -type d -exec chmod 755 {} \;
+ find /opt/factorio-init -type d -exec chmod 755 {} \;
  find /opt/factorio -type d -exec chmod 755 {} \;
  ```
 
 # Install
-- Create a directory where you want to store this script along with configuration. Cloning from github assuming **/opt/factorio-SEinit** as the directory:
+- Create a directory where you want to store this script along with configuration. Cloning from github assuming **/opt/factorio-init** as the directory:
 
  ```bash
- yum install git
+ yum install git wget python-requests
  cd '/opt'
- git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit
+ git clone --recurse-submodules https://github.com/jhawkwind/factorio-SEinit /opt/factorio-init
  ```
  
-- Rename **/opt/factorio-SEinit/config.example** to **/opt/factorio-SEinit/config** and modify the values within according to your setup.
+- Rename **/opt/factorio-init/config.example** to **/opt/factorio-init/config** and modify the values within according to your setup.
 
 ## Install appropriate glibc version as required for CentOS 7
 
@@ -75,7 +85,7 @@ This is a fork of https://github.com/Bisa/factorio-init
 - Compile the required GLIBC 2.18 and install it side-by-side with the OS version.
 ```bash
 yum install glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel
-cd /opt/factorio-SEinit/glibc
+cd /opt/factorio-init/glibc
 git apply ../patches/test-installation.pl.patch
 mkdir glibc-build
 cd glibc-build
@@ -92,23 +102,23 @@ make install
 - File location format:
   * /opt (or /data)
     * /factorio/
-    * /factorio-SEinit/
+    * /factorio-init/
     * /glibc-2.18/
       * lib/
         * ld-2.18.so
 - Via the RPM, just run:
   ```bash
-  rpm -Uvh /opt/factorio-SEinit/selinux/Factorio-SEinit-1.1-0.el7.src.rpm
-  restorecon -R -v /opt/factorio-SEinit
+  rpm -Uvh /opt/factorio-init/selinux/Factorio-SEinit-1.1-0.el7.src.rpm
+  restorecon -R -v /opt/factorio-init
   restorecon -R -v /opt/glibc-2.18
   ```
 - Compiling the module manually:
   ```bash
   yum install policycoreutils-python policycoreutils-devel setools-console
-  cd /opt/factorio-SEinit/selinux
+  cd /opt/factorio-init/selinux
   make -f /usr/share/selinux/devel/Makefile factorio.pp
   semodule -i factorio.pp
-  restorecon -R -v /opt/factorio-SEinit
+  restorecon -R -v /opt/factorio-init
   restorecon -R -v /opt/glibc-2.18
   ```
 
@@ -117,7 +127,7 @@ make install
 
  ```bash
  useradd -c "Factorio Server account" -d /opt/factorio -M -s /usr/sbin/nologin -r factorio
- /opt/factorio-SEinit/factorio install  # see help for options
+ /opt/factorio-init/factorio install  # see help for options
  ```
 
 - The installation routine creates Factorio's `config.ini` automatically.
@@ -131,11 +141,11 @@ make install
 - Copy/Symlink or source the bash_autocompletion file
 
  ```bash
- ln -s /opt/factorio-SEinit/bash_autocomplete /etc/bash_completion.d/factorio
+ ln -s /opt/factorio-init/bash_autocomplete /etc/bash_completion.d/factorio
  ```
  OR:
  ```bash
- echo "source /opt/factorio-SEinit/bash_autocomplete" >> ~/.bashrc
+ echo "source /opt/factorio-init/bash_autocomplete" >> ~/.bashrc
  # restart your shell to verify that it worked
  ```
 
@@ -143,7 +153,7 @@ make install
 - Copy the example service, adjust & reload
 
  ```bash
- cp /opt/factorio-SEinit/factorio.service.example /etc/systemd/system/factorio.service
+ cp /opt/factorio-init/factorio.service.example /etc/systemd/system/factorio.service
  # Edit the service file to suit your environment then reload systemd
  systemctl daemon-reload
  ```
