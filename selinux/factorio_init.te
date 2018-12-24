@@ -1,0 +1,59 @@
+policy_module(factorio_init, 1.1.0)
+
+########################################
+#
+# Declarations
+#
+
+type factorio_init_t;
+type factorio_init_exec_t;
+type factorio_init_conf_t;
+init_daemon_domain(factorio_init_t, factorio_init_exec_t)
+
+# You can uncomment this line and re-compile the module to debug permission issues.
+permissive factorio_init_t;
+
+########################################
+#
+# factorio local policy
+#
+
+require {
+		type unconfined_t;
+		type tmp_t;
+		type factorio_tmp_t;
+}
+
+#============= unconfined_t ==============
+# Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
+factorio_init_manage_file_dirs(unconfined_t);
+factorio_init_relabel_file_dirs(unconfined_t);
+
+# Allow transition
+factorio_init_domtrans(unconfined_t)
+factorio_init_exec(unconfined_t)
+
+#============= factorio_init_t ==============
+factorio_domtrans(factorio_init_t)
+factorio_exec(factorio_init_t)
+factorio_manage_file_dirs(factorio_init_t)
+
+## Allowed shared TMP file access
+allow factorio_t tmp_t:dir { getattr execute read search add_name }
+type_transition factorio_init_t tmp_t:file factorio_tmp_t;
+type_transition factorio_init_t tmp_t:dir factorio_tmp_t;
+type_transition factorio_init_t tmp_t:lnk_file factorio_tmp_t;
+type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
+allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
+
+corecmd_exec_bin(factorio_init_t);
+corecmd_exec_shell(factorio_init_t);
+kernel_read_system_state(factorio_init_t);
+miscfiles_read_generic_certs(factorio_init_t);
+miscfiles_read_localization(factorio_init_t);
+files_exec_usr_files(factorio_init_t);
+files_read_etc_files(factorio_init_t);
+netutils_exec_ping(factorio_init_t);
+corenet_tcp_connect_http_port(factorio_init_t);
+fs_noxattr_type(factorio_init_t);
+userdom_use_inherited_user_ptys(factorio_init_t);

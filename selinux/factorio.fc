@@ -1,10 +1,10 @@
+
+# Factorio proper
 /opt/factorio/bin/x64/factorio	--	gen_context(system_u:object_r:factorio_exec_t,s0)
 /opt/factorio(/.*)?				system_u:object_r:factorio_t:s0
-/opt/factorio-init(/.*)?				system_u:object_r:factorio_t:s0
-/opt/factorio-init/factorio		--	system_u:object_r:factorio_t:s0
-/opt/glibc-[^/]*/lib/ld-[^/]*\.so(\.[^/]*)*	--	system_u:object_r:ld_so_t:s0
 /data/factorio/bin/x64/factorio	--	gen_context(system_u:object_r:factorio_exec_t,s0)
 /data/factorio(/.*)?				system_u:object_r:factorio_t:s0
-/data/factorio-init(/.*)?				system_u:object_r:factorio_t:s0
-/data/factorio-init/factorio		--	system_u:object_r:factorio_t:s0
+
+# Ensure our custom glibc is the proper domain type
+/opt/glibc-[^/]*/lib/ld-[^/]*\.so(\.[^/]*)*	--	system_u:object_r:ld_so_t:s0
 /data/glibc-[^/]*/lib/ld-[^/]*\.so(\.[^/]*)*	--	system_u:object_r:ld_so_t:s0

@@ -3,7 +3,7 @@
 
 ########################################
 ## <summary>
-##	Execute factorio_exec_t in the factorio domain.
+##	Execute factorio_exec_t or ld_so_t in the factorio domain.
 ## </summary>
 ## <param name="domain">
 ## <summary>
@@ -13,11 +13,14 @@
 #
 interface(`factorio_domtrans',`
 	gen_require(`
-		type factorio_t, factorio_exec_t;
+		type factorio_t, factorio_exec_t, ld_so_t;
+		class process { transition };
 	')
 
 	corecmd_search_bin($1)
 	domtrans_pattern($1, factorio_exec_t, factorio_t)
+	domtrans_pattern($1, ld_so_t, factorio_t)
+	auditallow $1 factorio_t:process { transition };
 ')
 
 ######################################
@@ -32,9 +35,83 @@ interface(`factorio_domtrans',`
 #
 interface(`factorio_exec',`
 	gen_require(`
-		type factorio_exec_t;
+		type factorio_exec_t, ld_so_t;
 	')
 
 	corecmd_search_bin($1)
 	can_exec($1, factorio_exec_t)
+	can_exec($1, ld_so_t)
 ')
+
+######################################
+## <summary>
+##	Manage all files and directories in the factorio domain
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`factorio_manage_file_dirs',`
+	gen_require(`
+		type factorio_t, factorio_tmp_t, factorio_exec_t, tmp_t;
+	')
+	
+	allow $1 factorio_t:dir manage_dir_perms;
+	allow $1 factorio_t:file manage_file_perms;
+	allow $1 factorio_tmp_t:dir manage_dir_perms;
+	allow $1 factorio_tmp_t:file manage_file_perms;
+	allow $1 factorio_exec_t:file manage_file_perms;
+')
+
+######################################
+## <summary>
+##	Relabel all files and directories in the factorio domain
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`factorio_relabel_file_dirs',`
+	gen_require(`
+		type factorio_t, factorio_tmp_t, factorio_exec_t;
+		class dir { relabelto relabelfrom };
+		class file { relabelto relabelfrom };
+	')
+	
+	allow $1 factorio_t:dir { relabelto relabelfrom };
+	allow $1 factorio_t:file { relabelto relabelfrom };
+	allow $1 factorio_tmp_t:dir { relabelto relabelfrom };
+	allow $1 factorio_tmp_t:file { relabelto relabelfrom };
+	allow $1 factorio_exec_t:file { relabelto relabelfrom };
+')
+
+########################################
+## <summary>
+##      Make the specified type usable as
+##      an entry point for the domain.
+## </summary>
+## <param name="domain">
+##      <summary>
+##      Domain to be entered.
+##      </summary>
+## </param>
+## <param name="type">
+##      <summary>
+##      Type of program used for entering
+##      the domain.
+##      </summary>
+## </param>
+#
+interface(`factorio_domain_entry_file',`
+        gen_require(`
+                class file { entrypoint };
+        ')
+        auditallow $1 $2:file { entrypoint };
+		domain_entry_file($1,$2);
+')
+
+
