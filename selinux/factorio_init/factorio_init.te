@@ -32,6 +32,7 @@ require {
 		class process { transition };
 }
 role system_r types factorio_init_t;
+role unconfined_r types factorio_init_t;
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.

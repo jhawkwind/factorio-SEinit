@@ -38,9 +38,9 @@ interface(`factorio_exec',`
 		type factorio_exec_t, ld_so_t;
 	')
 
-	corecmd_search_bin($1)
-	can_exec($1, factorio_exec_t)
-	can_exec($1, ld_so_t)
+	corecmd_search_bin($1);
+	can_exec($1, factorio_exec_t);
+	can_exec($1, ld_so_t);
 ')
 
 ######################################
