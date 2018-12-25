@@ -71,6 +71,7 @@ type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
 # Auto transition the process
 type_transition factorio_init_t factorio_exec_t:process factorio_t;
 type_transition factorio_init_t ld_so_t:process factorio_t;
+type_transition unconfined_t factorio_init_exec_t:process factorio_init_t;
 
 allow factorio_init_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 allow factorio_init_exec_t fs_t:filesystem { associate }; # This is necessary to avoid corruption when relabeling
