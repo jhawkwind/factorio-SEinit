@@ -26,6 +26,8 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd "${SCRIPT_DIR}"
 
+SCRIPT_ARGS=$@;
+
 # Load config file
 if [ -L $0 ]; then
   source `readlink -e $0 | sed "s:[^/]*$:config:"`
@@ -200,14 +202,7 @@ as_user() {
     	/bin/bash -c "$1"
       fi
   elif [ "$(id -u)" == "0" ]; then # Are we root?
-  	# Is SELINUX enabled and we are not already in the proper context?
-  	if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
-  		# Yeah, it is a shell within a shell within another shell. But it is necessary due to the limitations
-  		# of SU requiring a shell to execute, then the compiled command needing its own little world.
-    	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u -- ${1}"
-    else
-      su $USERNAME -s /bin/bash -c "$1"
-    fi
+      exec su "$USERNAME" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}"
   else
     # To prevent odd permission behaviour, either
     # run this script as the configured user or as root
