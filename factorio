@@ -27,7 +27,7 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd "${SCRIPT_DIR}"
 
 # Save the script arguments to be called later.
-SCRIPT_ARGS=$@;
+SCRIPT_ARGS="$@";
 
 # Load config file
 if [ -L $0 ]; then
@@ -167,6 +167,7 @@ usage(){
 ME=`whoami`
 
 verify_user() { 
+  g
   if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
     exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
     # Nothing will be executed beyond the above line,
