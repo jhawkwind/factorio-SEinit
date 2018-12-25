@@ -43,6 +43,8 @@ factorio_init_exec(unconfined_t);
 
 #============= factorio_init_t ==============
 #
+fs_noxattr_type(factorio_init_t);
+fs_noxattr_type(factorio_init_conf_t);
 auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_domtrans(factorio_init_t);
@@ -85,7 +87,6 @@ files_exec_usr_files(factorio_init_t);
 files_read_etc_files(factorio_init_t);
 netutils_exec_ping(factorio_init_t);
 corenet_tcp_connect_http_port(factorio_init_t);
-fs_noxattr_type(factorio_init_t);
 userdom_use_inherited_user_ptys(factorio_init_t);
 auth_read_passwd(factorio_init_t);
 logging_create_devlog_dev(factorio_init_t);
