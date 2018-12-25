@@ -167,7 +167,7 @@ usage(){
 ME=`whoami`
 
 verify_user() { 
-  g
+  
   if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
     exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
     # Nothing will be executed beyond the above line,
