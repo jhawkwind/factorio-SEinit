@@ -168,7 +168,7 @@ ME=`whoami`
 
 verify_user() { 
   if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
-    exec su "${USERNAME}" -s /bin/base -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
+    exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
     # Nothing will be executed beyond the above line,
     # because exec replaces running process with the new one.
     # But be cause we are paranoid.
