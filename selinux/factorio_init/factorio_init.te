@@ -60,8 +60,10 @@ allow factorio_init_t factorio_t:process { noatsecure rlimitinh siginh signal si
 allow factorio_init_t self:capability net_raw;
 allow factorio_init_t self:process { setcap setexec };
 allow factorio_init_t self:rawip_socket { create getopt read setopt write };
-allow factorio_init_t self:udp_socket { connect create getattr read write };
 allow factorio_init_t self:unix_dgram_socket { connect create write };
+allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
+allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
+allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name };
