@@ -167,7 +167,7 @@ usage(){
 ME=`whoami`
 
 verify_user() { 
-  
+  SCRIPT_ARGS="${1}"
   if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
     exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
     # Nothing will be executed beyond the above line,
@@ -623,7 +623,7 @@ update(){
 case "$1" in
   start)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     # Starts the server
     if is_running; then
       echo "Server already running."
@@ -638,7 +638,7 @@ case "$1" in
 
   stop)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     # Stops the server
     if is_running; then
       send_cmd "Server is being shut down on request"
@@ -654,7 +654,7 @@ case "$1" in
 
   restart)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     # Restarts the server
     if is_running; then
       send_cmd "Server is being restarted on request, be right back!"
@@ -676,13 +676,13 @@ case "$1" in
     fi
     ;;
   init-server)
-  	verify_user $@; # Check to make sure we are running the correct context.
+  	verify_user ${SCRIPT_ARGS}; # Check to make sure we are running the correct context.
     init-server;
     exit 2;
     ;;
   status)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     # Shows server status
     if is_running; then
       echo "$SERVICE_NAME is running."
@@ -693,7 +693,7 @@ case "$1" in
     ;;
   cmd)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     if [ -z "$2" ]; then
       trap 'clear' SIGTERM EXIT
 
@@ -718,7 +718,7 @@ case "$1" in
     ;;
   chatlog)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     case $2 in
       --tail|-t)
         tail -F -n +0 ${CMDOUT} |egrep -v "${NONCMDPATTERN}"
@@ -730,17 +730,17 @@ case "$1" in
     ;;
   players)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     cmd_players
     ;;
   players-online|online)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     cmd_players online
     ;;
   new-game)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     if [ -z $2 ]; then
       echo "You must specify a save name for your new game"
       exit 1
@@ -787,7 +787,7 @@ case "$1" in
 
   save-game)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     savename="${WRITE_DIR}/saves/$2.zip"
 
     # Stop Service
@@ -808,7 +808,7 @@ case "$1" in
 
   load-save)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     # Ensure we get a new save file name
     newsave=${WRITE_DIR}/saves/$2.zip
     if [ ! -f "${newsave}" ]; then
@@ -836,7 +836,7 @@ case "$1" in
     ;;
   inv|invocation)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     echo ${INVOCATION}
     ;;
   help|--help|-h)
@@ -844,17 +844,17 @@ case "$1" in
     ;;
   listcommands)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     echo `$0 help 2> /dev/null |egrep '^   ' |awk '{ print $1 }'`
     ;;
   listsaves)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     find ${WRITE_DIR} -type f -name "*.zip" -exec basename {} \; |sed -e 's/.zip//'
     ;;
   version)
     # Also verify that this script is running the correct context.
-    verify_user;
+    verify_user ${SCRIPT_ARGS};
     echo `get_bin_version`
     ;;
   source)
