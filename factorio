@@ -188,13 +188,10 @@ verify_user() {
   umask 0022; # Set this in case things are too restrictive for Factorio.
 }
 
-# Also verify that this script is running the correct context.
-verify_user;
-
 as_user() {
   if [ $ME == $USERNAME ]; then # Are we the factorio user? # This will always happen.
     bash -c "$1"
-  elif [ "$(id -u)" == "0" ]; then # Are we root? # this will never happen.
+  elif [ "$(id -u)" == "0" ]; then # Are we root? # This will only happen on install.
     su $USERNAME -s /bin/bash -c "$1"
   else
     # To prevent odd permission behaviour, either 
@@ -391,6 +388,7 @@ install(){
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
   # name used in FACTORIO_PATH
+  umask 0022;
   expected_path="`dirname ${FACTORIO_PATH}`/${PACKAGE_DIR_NAME}"
   if ! [ "${FACTORIO_PATH}" == "${expected_path}" ]; then
     echo "Aborting install! FACTORIO_PATH does not match expected path: ${expected_path}"
@@ -451,14 +449,26 @@ install(){
     exit 1
   fi
 
-  # Generate default config.ini by creating a save
-  as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}"
+  # Generate default config.ini by creating a save. And restart script to ensure that it is in the proper context.
+  ${SCRIPT_DIR}/factorio init-server
+    
   if [ $? -eq 0 ]; then
     echo "Installation complete, edit data/server-settings.json and start your server"
     exit 0
   else
     echo "Failed to create save, review the output above to recover"
     exit 1
+  fi
+}
+
+init-server(){
+  if [ ! -f "${SERVER_SETTINGS}" ]; then
+    as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
+    resutling_status=$?;
+    exit $?;
+  else
+  	echo "You cannot re-initialize a server that is ALREADY initialized at ${SERVER_SETTINGS}!";
+    exit 1;
   fi
 }
 
@@ -582,6 +592,8 @@ update(){
 
 case "$1" in
   start)
+    # Also verify that this script is running the correct context.
+    verify_user;
     # Starts the server
     if is_running; then
       echo "Server already running."
@@ -595,6 +607,8 @@ case "$1" in
     ;;
 
   stop)
+    # Also verify that this script is running the correct context.
+    verify_user;
     # Stops the server
     if is_running; then
       send_cmd "Server is being shut down on request"
@@ -609,6 +623,8 @@ case "$1" in
     ;;
 
   restart)
+    # Also verify that this script is running the correct context.
+    verify_user;
     # Restarts the server
     if is_running; then
       send_cmd "Server is being restarted on request, be right back!"
@@ -629,8 +645,14 @@ case "$1" in
       fi
     fi
     ;;
-
+  init-server)
+  	verify_user $@; # Check to make sure we are running the correct context.
+    init-server;
+    exit 2;
+    ;;
   status)
+    # Also verify that this script is running the correct context.
+    verify_user;
     # Shows server status
     if is_running; then
       echo "$SERVICE_NAME is running."
@@ -640,6 +662,8 @@ case "$1" in
     fi
     ;;
   cmd)
+    # Also verify that this script is running the correct context.
+    verify_user;
     if [ -z "$2" ]; then
       trap 'clear' SIGTERM EXIT
 
@@ -663,6 +687,8 @@ case "$1" in
     fi
     ;;
   chatlog)
+    # Also verify that this script is running the correct context.
+    verify_user;
     case $2 in
       --tail|-t)
         tail -F -n +0 ${CMDOUT} |egrep -v "${NONCMDPATTERN}"
@@ -673,12 +699,18 @@ case "$1" in
     esac
     ;;
   players)
+    # Also verify that this script is running the correct context.
+    verify_user;
     cmd_players
     ;;
   players-online|online)
+    # Also verify that this script is running the correct context.
+    verify_user;
     cmd_players online
     ;;
   new-game)
+    # Also verify that this script is running the correct context.
+    verify_user;
     if [ -z $2 ]; then
       echo "You must specify a save name for your new game"
       exit 1
@@ -724,6 +756,8 @@ case "$1" in
     ;;
 
   save-game)
+    # Also verify that this script is running the correct context.
+    verify_user;
     savename="${WRITE_DIR}/saves/$2.zip"
 
     # Stop Service
@@ -743,6 +777,8 @@ case "$1" in
     ;;
 
   load-save)
+    # Also verify that this script is running the correct context.
+    verify_user;
     # Ensure we get a new save file name
     newsave=${WRITE_DIR}/saves/$2.zip
     if [ ! -f "${newsave}" ]; then
@@ -769,18 +805,26 @@ case "$1" in
     update "$2"
     ;;
   inv|invocation)
+    # Also verify that this script is running the correct context.
+    verify_user;
     echo ${INVOCATION}
     ;;
   help|--help|-h)
     usage
     ;;
   listcommands)
+    # Also verify that this script is running the correct context.
+    verify_user;
     echo `$0 help 2> /dev/null |egrep '^   ' |awk '{ print $1 }'`
     ;;
   listsaves)
+    # Also verify that this script is running the correct context.
+    verify_user;
     find ${WRITE_DIR} -type f -name "*.zip" -exec basename {} \; |sed -e 's/.zip//'
     ;;
   version)
+    # Also verify that this script is running the correct context.
+    verify_user;
     echo `get_bin_version`
     ;;
   source)
