@@ -75,7 +75,7 @@ type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
 # Auto transition the process
 type_transition factorio_init_t factorio_exec_t:process factorio_t;
 type_transition factorio_init_t ld_so_t:process factorio_t;
-type_transition unconfined_t factorio_init_exec_t:process factorio_init_t;
+# type_transition unconfined_t factorio_init_exec_t:process factorio_init_t; # DO NOT DO THIS! You can't install that way!
 
 allow factorio_init_t usr_t:dir { add_name }; # Allow create subdirectory.
 type_transition factorio_init_t usr_t:dir factorio_t; # Create directory as factorio_t.
