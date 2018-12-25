@@ -53,8 +53,6 @@ factorio_exec(unconfined_t);
 
 #============= factorio_t ==============
 factorio_exec(factorio_t);
-fs_noxattr_type(factorio_exec_t);
-fs_noxattr_type(factorio_t);
 
 allow factorio_t self:unix_stream_socket create_stream_socket_perms;
 allow factorio_t self:fifo_file manage_fifo_file_perms;

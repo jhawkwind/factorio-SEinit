@@ -82,4 +82,5 @@ interface(`factorio_init_relabel_file_dirs',`
 	allow $1 factorio_init_t:file { relabelto relabelfrom };
 	allow $1 factorio_init_exec_t:file { relabelto relabelfrom };
 	allow $1 factorio_init_conf_t:file { relabelto relabelfrom };
+	allow $1 factorio_init_t:lnk_file { relabelto relabelfrom };
 ')

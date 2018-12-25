@@ -45,6 +45,8 @@ factorio_init_exec(unconfined_t);
 #
 auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
+factorio_init_exec(factorio_init_t); # Allow recursive execution.
+
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
 factorio_manage_file_dirs(factorio_init_t);
@@ -65,7 +67,7 @@ type_transition factorio_init_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_init_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
 
-# Auto transition tkhe process
+# Auto transition the process
 type_transition factorio_init_t factorio_exec_t:process factorio_t;
 type_transition factorio_init_t ld_so_t:process factorio_t;
 
