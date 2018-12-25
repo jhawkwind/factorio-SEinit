@@ -27,7 +27,7 @@ require {
 		type fs_t;
 		role system_r;
 		class filesystem { associate };
-        class file { append create execute getattr ioctl lock open read rename setattr unlink write };
+        class file { append create execute getattr ioctl lock open read rename setattr unlink write map };
         class process { setcap entrypoint };
         class capability net_raw;
         class tcp_socket { connect create getattr getopt setopt };
@@ -52,12 +52,14 @@ factorio_domtrans(unconfined_t);
 factorio_exec(unconfined_t);
 
 #============= factorio_t ==============
+factorio_exec(factorio_t);
 fs_noxattr_type(factorio_exec_t);
 fs_noxattr_type(factorio_t);
 
 allow factorio_t self:unix_stream_socket create_stream_socket_perms;
 allow factorio_t self:fifo_file manage_fifo_file_perms;
 
+allow factorio_t factorio_exec_t:file { map };
 allow factorio_t tmp_t:dir { getattr execute read search add_name };
 allow factorio_t factorio_tmp_t:dir manage_dir_perms;
 allow factorio_t factorio_tmp_t:file manage_file_perms;
@@ -85,5 +87,5 @@ miscfiles_read_localization(factorio_t);
 kernel_read_system_state(factorio_t);
 miscfiles_read_generic_certs(factorio_t);
 sysnet_read_config(factorio_t); # Read network access such as resolver files for ping.
-
+userdom_use_inherited_user_ptys(factorio_t); # For when it is executed through an interactive session.
 

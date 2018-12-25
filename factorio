@@ -195,7 +195,7 @@ as_user() {
   		
   	  # Is SELINUX enabled and we are not already in the proper context?
 	  if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
-    	runcon -t factorio_t -r system_r -u system_u /bin/bash -c "${1}"
+    	runcon -t factorio_t -r system_r -u system_u -- ${1}
       else
     	/bin/bash -c "$1"
       fi
@@ -204,7 +204,7 @@ as_user() {
   	if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
   		# Yeah, it is a shell within a shell within another shell. But it is necessary due to the limitations
   		# of SU requiring a shell to execute, then the compiled command needing its own little world.
-    	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u /bin/bash -c '${1}'"
+    	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u -- ${1}"
     else
       su $USERNAME -s /bin/bash -c "$1"
     fi
@@ -494,7 +494,7 @@ install(){
   set_perms; # Set file permissions
 
   # Generate default config.ini by creating a save. And restart script to ensure that it is in the proper context.
-  "${SCRIPT_DIR}/factorio init_server"
+  ${SCRIPT_DIR}/factorio init-server
   if [ $? -eq 0 ]; then
     echo "Installation complete, edit data/server-settings.json and start your server"
     exit 0
