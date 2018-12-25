@@ -61,6 +61,9 @@ interface(`factorio_init_manage_file_dirs',`
 	allow $1 factorio_init_t:file manage_file_perms;
 	allow $1 factorio_init_exec_t:file manage_file_perms;
 	allow $1 factorio_init_conf_t:file manage_file_perms;
+	allow $1 factorio_init_t:file { map };
+	allow $1 factorio_init_exec_t:file { map };
+	allow $1 factorio_init_conf_t:file { map };
 ')
 
 ######################################
