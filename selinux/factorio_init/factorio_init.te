@@ -25,9 +25,10 @@ require {
 		type factorio_tmp_t;
 		type ld_so_t;
 		type fs_t;
+		type usr_t;
 		role system_r;
 		class filesystem { associate };
-		class dir {getattr execute read search add_name };
+		class dir { write getattr execute read search add_name };
 		class process { transition };
 }
 role system_r types factorio_init_t;
@@ -92,3 +93,7 @@ corenet_tcp_connect_http_port(factorio_init_t);
 userdom_use_inherited_user_ptys(factorio_init_t);
 auth_read_passwd(factorio_init_t);
 logging_create_devlog_dev(factorio_init_t);
+
+## Why is this needed?
+auditallow factorio_init_t user_t:dir { write };
+allow factorio_init_t usr_t:dir { write };
