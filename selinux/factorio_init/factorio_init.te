@@ -23,10 +23,12 @@ require {
 		type tmp_t;
 		type factorio_t;
 		type factorio_tmp_t;
+		type ld_so_t;
 		type fs_t;
 		role system_r;
 		class filesystem { associate };
 		class dir {getattr execute read search add_name };
+		class process { transition };
 }
 role system_r types factorio_init_t;
 
@@ -60,6 +62,10 @@ type_transition factorio_init_t tmp_t:file factorio_tmp_t;
 type_transition factorio_init_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_init_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
+
+# Auto transition tkhe process
+type_transition factorio_init_t factorio_exec_t:process factorio_t;
+type_transition factorio_init_t ld_so_t:process factorio_t;
 
 allow factorio_init_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 

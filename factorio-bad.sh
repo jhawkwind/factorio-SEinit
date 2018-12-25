@@ -26,7 +26,6 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd "${SCRIPT_DIR}"
 
-# Save the script arguments to be called later.
 SCRIPT_ARGS=$@;
 
 # Load config file
@@ -81,7 +80,7 @@ if [ ${ALT_GLIBC} -gt 0 ]; then
   EXE_ARGS_GLIBC="--executable-path ${BINARYB}"
 fi
 case "$1" in
-  install|help|listcommands|version|"")
+  install|help|listcommands|version|init-server|"")
     ;;
   *)
     if ! [ -e ${BINARYB} ]; then
@@ -166,37 +165,46 @@ usage(){
 
 ME=`whoami`
 
-verify_user() { 
-  if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
-    exec su "${USERNAME}" -s /bin/base -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
-    # Nothing will be executed beyond the above line,
-    # because exec replaces running process with the new one.
-    # But be cause we are paranoid.
-    exit $?;
-  elif [ "${ME}" == "${USERNAME}" ] && [ "${SELINUX}" -eq 1 ]; then
-    factorio_init_context_string="^system_u:system_r:factorio_init_t:.*"
-    if ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
-      exec runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@";
-      exit $?;
-    fi
-  else
-  	echo "You must run this script either as the ${USERNAME} user, or as root!";
-  	exit 1;
-  fi
-  
-  umask 0022; # Set this in case things are too restrictive for Factorio.
+check_user() {
+	# This function makes sure that the whole script is running the proper context.
+	# Only the "install" does not call this function, as we need to run as root.
+	if [ $ME != $USERNAME ] && [ "$(id -u)" == "0" ]; then # Not factorio user, and root, switch user.
+
+  		exec su "$USERNAME" -s /bin/bash -c "${SCRIPT_DIR}/factorio $@"
+  		
+  		# nothing will be executed beyond that line,
+  		# because exec replaces running process with the new one
+  		exit $?; # Paranoia
+	elif [ $ME == $USERNAME ] && [ "${SELINUX}" -eq 1 ]; then
+		factorio_init_context_string="^system_u:system_r:factorio_init_t:.*"
+		if ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
+			exec runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@"
+			exit $?;
+		fi
+	fi
+
+	umask 0022; # Set this in case things are too restrictive for Factorio.
 }
 
-# Also verify that this script is running the correct context.
-verify_user;
-
 as_user() {
-  if [ $ME == $USERNAME ]; then # Are we the factorio user? # This will always happen.
-    bash -c "$1"
-  elif [ "$(id -u)" == "0" ]; then # Are we root? # this will never happen.
-    su $USERNAME -s /bin/bash -c "$1"
+  if [ ${SELINUX} -eq 1 ]; then # For the sake of clarity with SELINUX diagnostics.
+	logger "$(whoami) with context $(id -Z) executing: "
+	logger "${1}"
+  fi
+  
+  factorio_context_string="^system_u:system_r:factorio_t:.*"
+  if [ $ME == $USERNAME ]; then # Are we the factorio user?
+  		
+  	  # Is SELINUX enabled and we are not already in the proper context?
+	  if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
+    	runcon -t factorio_t -r system_r -u system_u -- ${1}
+      else
+    	/bin/bash -c "$1"
+      fi
+  elif [ "$(id -u)" == "0" ]; then # Are we root?
+      exec su "$USERNAME" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}"
   else
-    # To prevent odd permission behaviour, either 
+    # To prevent odd permission behaviour, either
     # run this script as the configured user or as root
     # (please do not run as root btw!)
     echo "Run this script as the $USERNAME user!"
@@ -226,7 +234,7 @@ wait_pingpong() {
 
 start_service() {
   if [ -e ${PIDFILE} ]; then
-    ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+    ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
     if [ "$?" -eq "0" ]; then
       echo "${SERVICE_NAME} is already running!"
       return 1
@@ -251,7 +259,7 @@ start_service() {
 
   as_user "tail -f ${FIFO} |${INVOCATION} ${EXE_ARGS_GLIBC}>> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
 
-  ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
+  ps -q $(cat ${PIDFILE}) > /dev/null 2>&1
   if [ "$?" -ne "0" ]; then
     echo "Unable to start ${SERVICE_NAME}"
     return 1
@@ -354,29 +362,35 @@ cmd_players(){
 }
 
 check_permissions(){
+	
+  if [ $ME != $USERNAME ]; then
+  	echo "You must run as ${USERNAME}."
+  	exit 1
+  fi
+  	
   if [ ! -e "${BINARYB}" ]; then
     echo "Can't find ${BINARYB}. Please check your config!"
     exit 1
   fi
 
-  if ! as_user "test -w ${WRITE_DIR}" ; then
+  if ! test -w ${WRITE_DIR} ; then
     echo "Check Permissions. Cannot write to ${WRITE_DIR}"
     exit 1
   fi
 
-  if ! as_user "touch ${PIDFILE}" ; then
+  if ! touch ${PIDFILE} ; then
     echo "Check Permissions. Cannot touch pidfile ${PIDFILE}"
     exit 1
   fi
 
   if ! [ -p ${FIFO} ]; then
-    if ! as_user "mkfifo ${FIFO}"; then
+    if ! mkfifo ${FIFO}; then
       echo "Failed to create pipe for stdin, if applicable, remove ${FIFO} and try again"
       exit 1
     fi
   fi
 
-  if ! as_user "touch ${CMDOUT}" ; then
+  if ! touch ${CMDOUT} ; then
     echo "Check Permissions. Cannot touch cmd output file ${CMDOUT}"
     exit 1
   fi
@@ -386,11 +400,36 @@ test_deps(){
   return 0 # TODO: Implement ldd check on $BINARY
 }
 
+set_perms(){
+  echo "Applying file ownership ..."
+  result=$(chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH})
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
+  echo "Applying file permission ..."
+  result=$(find ${FACTORIO_PATH} -type d -exec chmod 755 {} \;)
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply permission for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
+  if [[ ${SELINUX} -eq 1 ]]; then
+  	echo "Applying SELINUX security contexts ..."
+  	result=$(restorecon -R -v ${FACTORIO_PATH})
+  	if [[ ${result} -ne 0 ]]; then
+  	  echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
+  	  exit 1
+  	fi
+  fi
+}
+
 install(){
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
   # name used in FACTORIO_PATH
-  expected_path="`dirname ${FACTORIO_PATH}`/${PACKAGE_DIR_NAME}"
+  expected_path="$(dirname ${FACTORIO_PATH})/${PACKAGE_DIR_NAME}"
   if ! [ "${FACTORIO_PATH}" == "${expected_path}" ]; then
     echo "Aborting install! FACTORIO_PATH does not match expected path: ${expected_path}"
     echo "See config option PACKAGE_DIR_NAME for more details"
@@ -403,6 +442,14 @@ install(){
     exit 1
   fi
 
+  # See if we need to compile GLIBC
+  if [ "${ALT_GLIBC}" -eq 1 ]; then
+  	if ! [ -f "${ALT_GLIBC_DIR}/lib/ld-${ALT_GLIBC_VER}.so" ]; then
+      #install_glibc();
+      echo ""
+  	fi
+  fi
+
   tarball=$1
   if ! [ -z "$tarball" ]; then
     if ! [ -f "${tarball}" ]; then
@@ -413,10 +460,11 @@ install(){
     downloadlatest=1
   fi
 
-  target="`dirname ${FACTORIO_PATH}`"
+  target="$(dirname ${FACTORIO_PATH})"
   if ! test -w "${target}"; then
     echo "Failed to write, aborting install!"
     echo "Install needs to be run as a user with write permissions to ${target}"
+    echo "Please create empty folder ${target}"
     exit 1
   fi
 
@@ -443,15 +491,11 @@ install(){
       exit 1
     fi
   fi
+  
+  set_perms; # Set file permissions
 
-  echo "Applying file ownership ..."
-  if ! chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH}; then
-    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
-    exit 1
-  fi
-
-  # Generate default config.ini by creating a save
-  as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}"
+  # Generate default config.ini by creating a save. And restart script to ensure that it is in the proper context.
+  ${SCRIPT_DIR}/factorio init-server
   if [ $? -eq 0 ]; then
     echo "Installation complete, edit data/server-settings.json and start your server"
     exit 0
@@ -461,12 +505,23 @@ install(){
   fi
 }
 
+init-server(){
+  if [ ! -f "${SERVER_SETTINGS}" ]; then
+    as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
+    resutling_status=$?;
+    exit $?;
+  else
+  	echo "You cannot re-initialize a server that is ALREADY initialized at ${SERVER_SETTINGS}!";
+    exit 1;
+  fi
+}
+
 get_bin_version(){
-  echo `as_user "$BINARY --version |egrep '^Version: [0-9\.]+' |egrep -o '[0-9\.]+' |head -n 1"`
+  echo "$(as_user '${BINARY} --version')" |egrep '^Version: [0-9\.]+' |egrep -o '[0-9\.]+[^\s]' |head -n 1
 }
 
 get_bin_arch(){
-  echo `as_user "$BINARY --version |egrep '^Binary version: ' |egrep -o '[0-9]{2}'"`
+  echo "$(as_user '${BINARY} --version')" |egrep '^Binary version: ' |egrep -o '[0-9]{2}'
 }
 
 update(){
@@ -581,6 +636,7 @@ update(){
 
 case "$1" in
   start)
+    check_user $@; # Check to make sure we are running the correct context.
     # Starts the server
     if is_running; then
       echo "Server already running."
@@ -594,6 +650,7 @@ case "$1" in
     ;;
 
   stop)
+    check_user $@; # Check to make sure we are running the correct context.
     # Stops the server
     if is_running; then
       send_cmd "Server is being shut down on request"
@@ -608,6 +665,7 @@ case "$1" in
     ;;
 
   restart)
+    check_user $@; # Check to make sure we are running the correct context.
     # Restarts the server
     if is_running; then
       send_cmd "Server is being restarted on request, be right back!"
@@ -628,8 +686,13 @@ case "$1" in
       fi
     fi
     ;;
-
+  init-server)
+  	check_user $@; # Check to make sure we are running the correct context.
+    init-server;
+    exit 2;
+    ;;
   status)
+  	check_user $@; # Check to make sure we are running the correct context.
     # Shows server status
     if is_running; then
       echo "$SERVICE_NAME is running."
@@ -662,6 +725,7 @@ case "$1" in
     fi
     ;;
   chatlog)
+    check_user $@; # Check to make sure we are running the correct context.
     case $2 in
       --tail|-t)
         tail -F -n +0 ${CMDOUT} |egrep -v "${NONCMDPATTERN}"
@@ -672,12 +736,15 @@ case "$1" in
     esac
     ;;
   players)
+    check_user $@; # Check to make sure we are running the correct context.
     cmd_players
     ;;
   players-online|online)
+    check_user $@; # Check to make sure we are running the correct context.
     cmd_players online
     ;;
   new-game)
+    check_user $@; # Check to make sure we are running the correct context.
     if [ -z $2 ]; then
       echo "You must specify a save name for your new game"
       exit 1
@@ -723,6 +790,7 @@ case "$1" in
     ;;
 
   save-game)
+    check_user $@; # Check to make sure we are running the correct context.
     savename="${WRITE_DIR}/saves/$2.zip"
 
     # Stop Service
@@ -742,6 +810,7 @@ case "$1" in
     ;;
 
   load-save)
+    check_user $@; # Check to make sure we are running the correct context.
     # Ensure we get a new save file name
     newsave=${WRITE_DIR}/saves/$2.zip
     if [ ! -f "${newsave}" ]; then
@@ -774,12 +843,15 @@ case "$1" in
     usage
     ;;
   listcommands)
+    check_user $@; # Check to make sure we are running the correct context.
     echo `$0 help 2> /dev/null |egrep '^   ' |awk '{ print $1 }'`
     ;;
   listsaves)
+    check_user $@; # Check to make sure we are running the correct context.
     find ${WRITE_DIR} -type f -name "*.zip" -exec basename {} \; |sed -e 's/.zip//'
     ;;
   version)
+    check_user $@; # Check to make sure we are running the correct context.
     echo `get_bin_version`
     ;;
   source)
