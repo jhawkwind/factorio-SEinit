@@ -81,7 +81,7 @@ if [ ${ALT_GLIBC} -gt 0 ]; then
   EXE_ARGS_GLIBC="--executable-path ${BINARYB}"
 fi
 case "$1" in
-  install|help|listcommands|version|"")
+  install|help|listcommands|version|init-server|"")
     ;;
   *)
     if ! [ -e ${BINARYB} ]; then
@@ -384,6 +384,40 @@ test_deps(){
   return 0 # TODO: Implement ldd check on $BINARY
 }
 
+set_perms(){
+  echo "Applying file ownership ..."
+  result=$(chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH})
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
+  echo "Applying file permission ..."
+  result=$(find ${FACTORIO_PATH} -type d -exec chmod 755 {} \;)
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply permission for ${FACTORIO_PATH}"
+    exit 1
+  fi
+ 
+  if [[ ${SELINUX} -eq 1 ]]; then
+  	echo "Applying SELINUX security contexts ..."
+  	result=$(restorecon -R -v ${FACTORIO_PATH})
+  	if [[ ${result} -ne 0 ]]; then
+  	  echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
+  	  exit 1
+  	fi
+  fi
+  
+  if [[ ${SELINUX} -eq 1 ]]; then
+  	echo "Applying SELINUX security contexts ..."
+  	result=$(restorecon -R -v ${SCRIPT_DIR})
+  	if [[ ${result} -ne 0 ]]; then
+  	  echo "Failed to apply SELINUX security contexts for ${SCRIPT_DIR}"
+  	  exit 1
+  	fi
+  fi
+}
+
 install(){
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
@@ -443,11 +477,7 @@ install(){
     fi
   fi
 
-  echo "Applying file ownership ..."
-  if ! chown -R ${USERNAME}:${USERGROUP} ${FACTORIO_PATH}; then
-    echo "Failed to apply ownership ${USERNAME}:${USERGROUP} for ${FACTORIO_PATH}"
-    exit 1
-  fi
+  set_perms; # Set file permissions
 
   # Generate default config.ini by creating a save. And restart script to ensure that it is in the proper context.
   ${SCRIPT_DIR}/factorio init-server
