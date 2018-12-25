@@ -177,7 +177,7 @@ verify_user() {
   elif [ "${ME}" == "${USERNAME}" ] && [ "${SELINUX}" -eq 1 ]; then
     factorio_init_context_string="^system_u:system_r:factorio_init_t:.*"
     if ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
-      exec runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@";
+      runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@";
       exit $?;
     fi
   else
@@ -404,15 +404,6 @@ set_perms(){
   	result=$(restorecon -R -v ${FACTORIO_PATH})
   	if [[ ${result} -ne 0 ]]; then
   	  echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
-  	  exit 1
-  	fi
-  fi
-  
-  if [[ ${SELINUX} -eq 1 ]]; then
-  	echo "Applying SELINUX security contexts ..."
-  	result=$(restorecon -R -v ${SCRIPT_DIR})
-  	if [[ ${result} -ne 0 ]]; then
-  	  echo "Failed to apply SELINUX security contexts for ${SCRIPT_DIR}"
   	  exit 1
   	fi
   fi
