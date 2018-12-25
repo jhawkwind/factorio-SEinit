@@ -31,6 +31,8 @@ require {
 		class filesystem { associate };
 		class dir { write getattr execute read search add_name };
 		class process { transition };
+		class capability { chown };
+		class file { execute execute_no_trans entrypoint };
 }
 role system_r types factorio_init_t;
 role unconfined_r types factorio_init_t;
@@ -55,6 +57,7 @@ factorio_exec(factorio_init_t);
 factorio_manage_file_dirs(factorio_init_t);
 
 allow factorio_init_t factorio_init_conf_t:file read_file_perms;
+allow factorio_init_t factorio_init_exec_t:file read_file_perms;
 allow factorio_init_t factorio_t:fifo_file { create getattr open read write };
 allow factorio_init_t factorio_t:process { noatsecure rlimitinh siginh signal signull };
 allow factorio_init_t self:capability net_raw;
@@ -64,6 +67,7 @@ allow factorio_init_t self:unix_dgram_socket { connect create write };
 allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
 allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
+allow factorio_init_t self:capability chown;
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name write };
@@ -88,6 +92,8 @@ kernel_dgram_send(factorio_init_t); # Needed for logging
 selinux_validate_context(factorio_init_t); # Used to id -Z
 sysnet_read_config(factorio_init_t); # Read network access such as resolver files for ping.
 
+su_exec(factorio_init_t); # Change users when needed.
+userdom_manage_home_certs(factorio_init_t);
 corecmd_bin_entry_type(factorio_init_t);
 corecmd_exec_bin(factorio_init_t);
 corecmd_exec_shell(factorio_init_t);
