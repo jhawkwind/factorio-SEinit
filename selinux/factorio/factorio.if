@@ -89,4 +89,3 @@ interface(`factorio_relabel_file_dirs',`
 	allow $1 factorio_exec_t:file { relabelto relabelfrom };
 ')
 
-

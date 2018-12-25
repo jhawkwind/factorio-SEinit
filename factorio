@@ -162,6 +162,25 @@ usage(){
 }
 
 ME=`whoami`
+
+check_user() {
+	if [ $ME != $USERNAME ] && [ "$(id -u)" == "0" ]; then # Not factorio user, and root, switch user.
+
+  		exec su "$USERNAME" -s /bin/bash -c "${SCRIPT_DIR}/factorio $@"
+  		
+  		# nothing will be executed beyond that line,
+  		# because exec replaces running process with the new one
+  		exit $?; # Paranoia
+	elif [ $ME == $USERNAME ] && [ "${SELINUX}" -eq 1 ]; then
+		if [[ "$(id -Z)" =~ "^unconfined_u:unconfined_r:unconfined_t:.*" ]]; then
+			exec runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@"
+			exit $?;
+		fi
+	fi
+
+	umask 0022; # Set this in case things are too restrictive for Factorio.
+}
+
 as_user() {
   if [ ${SELINUX} -eq 1 ]; then # For the sake of clarity with SELINUX diagnostics.
 	logger "$(whoami) with context $(id -Z) executing: "
@@ -402,7 +421,7 @@ install(){
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
   # name used in FACTORIO_PATH
-  expected_path="`dirname ${FACTORIO_PATH}`/${PACKAGE_DIR_NAME}"
+  expected_path="$(dirname ${FACTORIO_PATH})/${PACKAGE_DIR_NAME}"
   if ! [ "${FACTORIO_PATH}" == "${expected_path}" ]; then
     echo "Aborting install! FACTORIO_PATH does not match expected path: ${expected_path}"
     echo "See config option PACKAGE_DIR_NAME for more details"
@@ -411,14 +430,15 @@ install(){
 
   # Prevent accidential overwrites
   if [ -e "${expected_path}" ]; then
-    echo "Aborting install, ${FACTORIO_PATH} already exists"
-    exit 1
+    	echo "Aborting install, ${FACTORIO_PATH} already exists"
+    	exit 1
   fi
 
   # See if we need to compile GLIBC
   if [ "${ALT_GLIBC}" -eq 1 ]; then
   	if ! [ -f "${ALT_GLIBC_DIR}/lib/ld-${ALT_GLIBC_VER}.so" ]; then
-      install_glibc()
+      #install_glibc();
+      echo ""
   	fi
   fi
 
@@ -432,10 +452,11 @@ install(){
     downloadlatest=1
   fi
 
-  target="`dirname ${FACTORIO_PATH}`"
+  target="$(dirname ${FACTORIO_PATH})"
   if ! test -w "${target}"; then
     echo "Failed to write, aborting install!"
     echo "Install needs to be run as a user with write permissions to ${target}"
+    echo "Please create empty folder ${target}"
     exit 1
   fi
 
@@ -596,6 +617,7 @@ update(){
 
 case "$1" in
   start)
+    check_user $@; # Check to make sure we are running the correct context.
     # Starts the server
     if is_running; then
       echo "Server already running."
@@ -609,6 +631,7 @@ case "$1" in
     ;;
 
   stop)
+    check_user $@; # Check to make sure we are running the correct context.
     # Stops the server
     if is_running; then
       send_cmd "Server is being shut down on request"
@@ -623,6 +646,7 @@ case "$1" in
     ;;
 
   restart)
+    check_user $@; # Check to make sure we are running the correct context.
     # Restarts the server
     if is_running; then
       send_cmd "Server is being restarted on request, be right back!"
@@ -645,6 +669,7 @@ case "$1" in
     ;;
 
   status)
+  	check_user $@; # Check to make sure we are running the correct context.
     # Shows server status
     if is_running; then
       echo "$SERVICE_NAME is running."
@@ -677,6 +702,7 @@ case "$1" in
     fi
     ;;
   chatlog)
+    check_user $@; # Check to make sure we are running the correct context.
     case $2 in
       --tail|-t)
         tail -F -n +0 ${CMDOUT} |egrep -v "${NONCMDPATTERN}"
@@ -687,12 +713,15 @@ case "$1" in
     esac
     ;;
   players)
+    check_user $@; # Check to make sure we are running the correct context.
     cmd_players
     ;;
   players-online|online)
+    check_user $@; # Check to make sure we are running the correct context.
     cmd_players online
     ;;
   new-game)
+    check_user $@; # Check to make sure we are running the correct context.
     if [ -z $2 ]; then
       echo "You must specify a save name for your new game"
       exit 1
@@ -738,6 +767,7 @@ case "$1" in
     ;;
 
   save-game)
+    check_user $@; # Check to make sure we are running the correct context.
     savename="${WRITE_DIR}/saves/$2.zip"
 
     # Stop Service
@@ -757,6 +787,7 @@ case "$1" in
     ;;
 
   load-save)
+    check_user $@; # Check to make sure we are running the correct context.
     # Ensure we get a new save file name
     newsave=${WRITE_DIR}/saves/$2.zip
     if [ ! -f "${newsave}" ]; then
@@ -789,12 +820,15 @@ case "$1" in
     usage
     ;;
   listcommands)
+    check_user $@; # Check to make sure we are running the correct context.
     echo `$0 help 2> /dev/null |egrep '^   ' |awk '{ print $1 }'`
     ;;
   listsaves)
+    check_user $@; # Check to make sure we are running the correct context.
     find ${WRITE_DIR} -type f -name "*.zip" -exec basename {} \; |sed -e 's/.zip//'
     ;;
   version)
+    check_user $@; # Check to make sure we are running the correct context.
     echo `get_bin_version`
     ;;
   source)
