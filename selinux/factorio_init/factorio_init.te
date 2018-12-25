@@ -27,6 +27,7 @@ require {
 		type fs_t;
 		type usr_t;
 		role system_r;
+		role unconfined_r;
 		class filesystem { associate };
 		class dir { write getattr execute read search add_name };
 		class process { transition };
