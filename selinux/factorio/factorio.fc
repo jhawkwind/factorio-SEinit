@@ -1,8 +1,8 @@
 
 # Factorio proper
-/opt/factorio/bin/x64/factorio	--	gen_context(system_u:object_r:factorio_exec_t,s0)
+/opt/factorio/bin/x64/factorio	--	system_u:object_r:factorio_exec_t:s0
 /opt/factorio(/.*)?				system_u:object_r:factorio_t:s0
-/data/factorio/bin/x64/factorio	--	gen_context(system_u:object_r:factorio_exec_t,s0)
+/data/factorio/bin/x64/factorio	--	system_u:object_r:factorio_exec_t:s0
 /data/factorio(/.*)?				system_u:object_r:factorio_t:s0
 
 # Ensure our custom glibc is the proper domain type

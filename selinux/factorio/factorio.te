@@ -12,7 +12,7 @@ domain_type(factorio_t);
 
 
 # You can uncomment this line and re-compile the module to debug permission issues.
-permissive factorio_t;
+#permissive factorio_t;
 
 
 ########################################
@@ -24,6 +24,9 @@ require {
 		type unconfined_t;
 		type ld_so_t;
 		type tmp_t;
+		type fs_t;
+		role system_r;
+		class filesystem { associate };
         class file { append create execute getattr ioctl lock open read rename setattr unlink write };
         class process { setcap entrypoint };
         class capability net_raw;
@@ -34,6 +37,7 @@ require {
         class udp_socket { bind connect create getattr setopt };
         class dir { getattr execute read search add_name };
 }
+role system_r types factorio_t;
 
 #============= Auditing ==============
 auditallow factorio_t factorio_exec_t:file { entrypoint }; # add auditing to init_domain()
@@ -46,11 +50,10 @@ factorio_manage_file_dirs(unconfined_t);
 factorio_relabel_file_dirs(unconfined_t);
 factorio_domtrans(unconfined_t);
 factorio_exec(unconfined_t);
-factorio_exec(factorio_t); # While you are factorio_t, you can execute things in own domain.
 
 #============= factorio_t ==============
-fs_noxattr_type(factorio_exec_t)
-fs_noxattr_type(factorio_t)
+fs_noxattr_type(factorio_exec_t);
+fs_noxattr_type(factorio_t);
 
 allow factorio_t self:unix_stream_socket create_stream_socket_perms;
 allow factorio_t self:fifo_file manage_fifo_file_perms;
@@ -62,6 +65,9 @@ type_transition factorio_t tmp_t:file factorio_tmp_t;
 type_transition factorio_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_t tmp_t:sock_file factorio_tmp_t;
+
+allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
+allow factorio_exec_t fs_t:filesystem { associate }; # For relabeling process in the install.
 
 allow factorio_t factorio_exec_t:file manage_file_perms;
 allow factorio_t self:dir manage_dir_perms;
@@ -78,12 +84,6 @@ corenet_udp_bind_generic_node(factorio_t);
 miscfiles_read_localization(factorio_t);
 kernel_read_system_state(factorio_t);
 miscfiles_read_generic_certs(factorio_t);
-
-#files_manage_generic_tmp_dirs(factorio_t);
-#files_manage_default_dirs(factorio_t);
-#fs_getattr_xattr_fs(factorio_t);
-#netutils_exec_ping(factorio_t);
-#sysnet_read_config(factorio_t);
-
+sysnet_read_config(factorio_t); # Read network access such as resolver files for ping.
 
 

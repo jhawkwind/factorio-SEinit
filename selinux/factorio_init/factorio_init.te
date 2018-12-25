@@ -11,7 +11,7 @@ type factorio_init_conf_t;
 init_daemon_domain(factorio_init_t, factorio_init_exec_t)
 
 # You can uncomment this line and re-compile the module to debug permission issues.
-permissive factorio_init_t;
+#permissive factorio_init_t;
 
 ########################################
 #
@@ -24,9 +24,11 @@ require {
 		type factorio_t;
 		type factorio_tmp_t;
 		type fs_t;
+		role system_r;
 		class filesystem { associate };
 		class dir {getattr execute read search add_name };
 }
+role system_r types factorio_init_t;
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
@@ -38,9 +40,19 @@ factorio_init_domtrans(unconfined_t);
 factorio_init_exec(unconfined_t);
 
 #============= factorio_init_t ==============
+#
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
 factorio_manage_file_dirs(factorio_init_t);
+
+allow factorio_init_t factorio_init_conf_t:file read_file_perms;
+allow factorio_init_t factorio_t:fifo_file { create getattr open read write };
+allow factorio_init_t factorio_t:process { noatsecure rlimitinh siginh signal signull };
+allow factorio_init_t self:capability net_raw;
+allow factorio_init_t self:process { setcap setexec };
+allow factorio_init_t self:rawip_socket { create getopt read setopt write };
+allow factorio_init_t self:udp_socket { connect create getattr read write };
+allow factorio_init_t self:unix_dgram_socket { connect create write };
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name };
@@ -51,6 +63,11 @@ type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
 
 allow factorio_init_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 
+kernel_dgram_send(factorio_init_t); # Needed for logging
+selinux_validate_context(factorio_init_t); # Used to id -Z
+sysnet_read_config(factorio_init_t); # Read network access such as resolver files for ping.
+
+corecmd_bin_entry_type(factorio_init_t);
 corecmd_exec_bin(factorio_init_t);
 corecmd_exec_shell(factorio_init_t);
 kernel_read_system_state(factorio_init_t);
@@ -62,3 +79,5 @@ netutils_exec_ping(factorio_init_t);
 corenet_tcp_connect_http_port(factorio_init_t);
 fs_noxattr_type(factorio_init_t);
 userdom_use_inherited_user_ptys(factorio_init_t);
+auth_read_passwd(factorio_init_t);
+logging_create_devlog_dev(factorio_init_t);

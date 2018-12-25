@@ -78,7 +78,7 @@ if [ ${ALT_GLIBC} -gt 0 ]; then
   EXE_ARGS_GLIBC="--executable-path ${BINARYB}"
 fi
 case "$1" in
-  install|help|listcommands|version|"")
+  install|help|listcommands|version|init-server|"")
     ;;
   *)
     if ! [ -e ${BINARYB} ]; then
@@ -164,6 +164,8 @@ usage(){
 ME=`whoami`
 
 check_user() {
+	# This function makes sure that the whole script is running the proper context.
+	# Only the "install" does not call this function, as we need to run as root.
 	if [ $ME != $USERNAME ] && [ "$(id -u)" == "0" ]; then # Not factorio user, and root, switch user.
 
   		exec su "$USERNAME" -s /bin/bash -c "${SCRIPT_DIR}/factorio $@"
@@ -172,7 +174,8 @@ check_user() {
   		# because exec replaces running process with the new one
   		exit $?; # Paranoia
 	elif [ $ME == $USERNAME ] && [ "${SELINUX}" -eq 1 ]; then
-		if [[ "$(id -Z)" =~ "^unconfined_u:unconfined_r:unconfined_t:.*" ]]; then
+		factorio_init_context_string="^system_u:system_r:factorio_init_t:.*"
+		if ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
 			exec runcon -t factorio_init_t -r system_r -u system_u "${SCRIPT_DIR}/factorio" "$@"
 			exit $?;
 		fi
@@ -187,14 +190,18 @@ as_user() {
 	logger "${1}"
   fi
   
+  factorio_context_string="^system_u:system_r:factorio_t:.*"
   if [ $ME == $USERNAME ]; then # Are we the factorio user?
-	  if [ ${SELINUX} -eq 1 ]; then
+  		
+  	  # Is SELINUX enabled and we are not already in the proper context?
+	  if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
     	runcon -t factorio_t -r system_r -u system_u /bin/bash -c "${1}"
       else
     	/bin/bash -c "$1"
       fi
   elif [ "$(id -u)" == "0" ]; then # Are we root?
-  	if [ ${SELINUX} -eq 1 ]; then
+  	# Is SELINUX enabled and we are not already in the proper context?
+  	if [ ${SELINUX} -eq 1 ] && ( ! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
   		# Yeah, it is a shell within a shell within another shell. But it is necessary due to the limitations
   		# of SU requiring a shell to execute, then the compiled command needing its own little world.
     	su $USERNAME -s /bin/bash -c "runcon -t factorio_t -r system_r -u system_u /bin/bash -c '${1}'"
@@ -411,8 +418,8 @@ set_perms(){
   	echo "Applying SELINUX security contexts ..."
   	result=$(restorecon -R -v ${FACTORIO_PATH})
   	if [[ ${result} -ne 0 ]]; then
-  		echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
-  		exit 1
+  	  echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
+  	  exit 1
   	fi
   fi
 }
@@ -430,8 +437,8 @@ install(){
 
   # Prevent accidential overwrites
   if [ -e "${expected_path}" ]; then
-    	echo "Aborting install, ${FACTORIO_PATH} already exists"
-    	exit 1
+    echo "Aborting install, ${FACTORIO_PATH} already exists"
+    exit 1
   fi
 
   # See if we need to compile GLIBC
@@ -486,14 +493,25 @@ install(){
   
   set_perms; # Set file permissions
 
-  # Generate default config.ini by creating a save
-  as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}"
+  # Generate default config.ini by creating a save. And restart script to ensure that it is in the proper context.
+  "${SCRIPT_DIR}/factorio init_server"
   if [ $? -eq 0 ]; then
     echo "Installation complete, edit data/server-settings.json and start your server"
     exit 0
   else
     echo "Failed to create save, review the output above to recover"
     exit 1
+  fi
+}
+
+init-server(){
+  if [ ! -f "${SERVER_SETTINGS}" ]; then
+    as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
+    resutling_status=$?;
+    exit $?;
+  else
+  	echo "You cannot re-initialize a server that is ALREADY initialized at ${SERVER_SETTINGS}!";
+    exit 1;
   fi
 }
 
@@ -667,7 +685,11 @@ case "$1" in
       fi
     fi
     ;;
-
+  init-server)
+  	check_user $@; # Check to make sure we are running the correct context.
+    init-server;
+    exit 2;
+    ;;
   status)
   	check_user $@; # Check to make sure we are running the correct context.
     # Shows server status
