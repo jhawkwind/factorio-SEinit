@@ -43,8 +43,6 @@ factorio_init_exec(unconfined_t);
 
 #============= factorio_init_t ==============
 #
-fs_noxattr_type(factorio_init_t);
-fs_noxattr_type(factorio_init_conf_t);
 auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_domtrans(factorio_init_t);
@@ -72,6 +70,8 @@ type_transition factorio_init_t factorio_exec_t:process factorio_t;
 type_transition factorio_init_t ld_so_t:process factorio_t;
 
 allow factorio_init_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
+allow factorio_init_exec_t fs_t:filesystem { associate }; # This is necessary to avoid corruption when relabeling
+allow factorio_init_conf_t fs_t:filesystem { associate };  # This is necessary to avoid corruption when relabeling
 
 kernel_dgram_send(factorio_init_t); # Needed for logging
 selinux_validate_context(factorio_init_t); # Used to id -Z
