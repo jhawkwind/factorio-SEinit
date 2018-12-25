@@ -95,5 +95,5 @@ auth_read_passwd(factorio_init_t);
 logging_create_devlog_dev(factorio_init_t);
 
 ## Why is this needed?
-auditallow factorio_init_t user_t:dir { write };
+auditallow factorio_init_t usr_t:dir { write };
 allow factorio_init_t usr_t:dir { write };
