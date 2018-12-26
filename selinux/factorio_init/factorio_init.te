@@ -27,7 +27,7 @@ require {
 		class capability { chown fowner fsetid setuid setgid audit_write };
 		class file { execute execute_no_trans entrypoint };
 		class netlink_selinux_socket { create bind };
-		class netlink_audit_socket { create write };
+		class netlink_audit_socket { create write read nlmsg_relay };
 }
 ########################################
 #
@@ -59,7 +59,10 @@ factorio_init_exec(unconfined_t);
 auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
-can_exec(factorio_init_t,su_exec_t); # Can change user.
+
+# Allow the init_t user to execute SU and change user.
+can_exec(factorio_init_t,su_exec_t);
+selinux_compute_access_vector(factorio_init_t)
 
 #### Allow relabeling and ownership change back to defined policies.
 type factorio_init_set_t, can_relabelto_binary_policy; # Inherit initial permissions from factorio_init_t, then add more permissions.
@@ -71,7 +74,7 @@ domain_entry_file(factorio_init_set_t,setfiles_exec_t);
 role unconfined_r types factorio_init_set_t; # Allow ONLY Unconfined roles to access this domain. Confined roles should not come here.
 allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
 allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
-allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay }; # This is to send auditing information to the log
+allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay read }; # This is to send auditing information to the log
 allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
 
 allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
