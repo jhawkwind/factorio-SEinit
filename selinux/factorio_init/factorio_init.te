@@ -61,7 +61,8 @@ domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
 
 #### Allow relabeling and ownership change back to defined policies.
-type factorio_init_set_t alias factorio_init_t, can_relabelto_binary_policy; # Inherit initial permissions from factorio_init_t, then add more permissions. OR use "domain_base_type(factorio_init_set_t);"
+type factorio_init_set_t can_relabelto_binary_policy; # Inherit initial permissions from factorio_init_t, then add more permissions.
+domain_base_type(factorio_init_set_t);
 auditallow factorio_init_t factorio_init_set_t:process { transition };
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
@@ -74,13 +75,13 @@ allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh 
 files_list_root(factorio_init_set_t); # Must be able to read root.
 dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
 userdom_use_inherited_user_ptys(factorio_init_set_t); # This is used to display results.
-allow factorio_init_set_t factorio_init_t:file { relabelto };
-allow factorio_init_set_t factorio_init_t:dir { relabelto };
-allow factorio_init_set_t factorio_t:file { relabelto };
-allow factorio_init_set_t factorio_t:dir { relabelto };
-allow factorio_init_set_t factorio_t:fifo_file { relabelto };
-allow factorio_init_set_t factorio_exec_t:file { relabelto };
-allow factorio_init_set_t factorio_tmp_t:file { relabelto };
+allow factorio_init_set_t factorio_init_t:file { relabelto manage_file_perms };
+allow factorio_init_set_t factorio_init_t:dir { relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:file { relabelto manage_file_perms };
+allow factorio_init_set_t factorio_t:dir { relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:fifo_file { relabelto manage_fifo_file_perms };
+allow factorio_init_set_t factorio_exec_t:file { relabelto manage_file_perms };
+allow factorio_init_set_t factorio_tmp_t:file { relabelto manage_file_perms };
 allow factorio_init_t self:capability { chown fowner fsetid setuid setgid};
 allow factorio_init_t factorio_t:capability { chown fowner fsetid setuid setgid};
 
