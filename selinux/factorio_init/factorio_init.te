@@ -24,10 +24,10 @@ require {
 		class filesystem { associate };
 		class dir { write getattr execute read search add_name };
 		class process { transition };
-		class capability { chown fowner };
+		class capability { chown fowner fsetid };
 		class file { execute execute_no_trans entrypoint };
-		class netlink_selinux_socket { create };
-		class netlink_audit_socket { create };
+		class netlink_selinux_socket { create bind };
+		class netlink_audit_socket { create write };
 }
 ########################################
 #
@@ -65,8 +65,9 @@ type factorio_init_set_t, can_relabelto_binary_policy;
 auditallow factorio_init_t factorio_init_set_t:process { transition };
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
-allow factorio_init_t self:netlink_selinux_socket { create };
-allow factorio_init_t self:netlink_audit_socket { create };
+role unconfined_r types factorio_init_set_t;
+allow factorio_init_t self:netlink_selinux_socket { create bind };
+allow factorio_init_t self:netlink_audit_socket { create write };
 allow factorio_init_set_t factorio_init_t:file { relabelto };
 allow factorio_init_set_t factorio_init_t:dir { relabelto };
 allow factorio_init_set_t factorio_t:file { relabelto };
@@ -74,8 +75,8 @@ allow factorio_init_set_t factorio_t:dir { relabelto };
 allow factorio_init_set_t factorio_t:fifo_file { relabelto };
 allow factorio_init_set_t factorio_exec_t:file { relabelto };
 allow factorio_init_set_t factorio_tmp_t:file { relabelto };
-allow factorio_init_t self:capability { chown fowner };
-allow factorio_init_t factorio_t:capability { chown fowner };
+allow factorio_init_t self:capability { chown fowner fsetid };
+allow factorio_init_t factorio_t:capability { chown fowner fsetid };
 
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
