@@ -65,6 +65,7 @@ type factorio_init_set_t, can_relabelto_binary_policy;
 auditallow factorio_init_t factorio_init_set_t:process { transition };
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
+domain_entry_file(factorio_init_set_t,setfiles_exec_t);
 role unconfined_r types factorio_init_set_t;
 allow factorio_init_t self:netlink_selinux_socket { create bind };
 allow factorio_init_t self:netlink_audit_socket { create write };
