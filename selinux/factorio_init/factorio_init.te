@@ -18,7 +18,7 @@ require {
 		type ld_so_t;
 		type fs_t;
 		type usr_t;
-		type restorecon_t;
+		type restorecond_t;
 		type setfiles_exec_t;
 		role system_r;
 		role unconfined_r;
@@ -61,7 +61,7 @@ factorio_init_exec(factorio_init_t); # Allow recursive execution.
 
 #### Allow relabeling back to defined policies.
 auditallow factorio_init_t factorio_init_set_t:process { transition };
-type factorio_init_set_t alias restorecon_t, can_relabelto_binary_policy;
+type factorio_init_set_t alias restorecond_t, can_relabelto_binary_policy;
 factorio_relabel_file_dirs(factorio_init_set_t);
 factorio_init_relabel_file_dirs(factorio_init_set_t);
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
