@@ -61,8 +61,8 @@ domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
 
 #### Allow relabeling and ownership change back to defined policies.
+type factorio_init_set_t, can_relabelto_binary_policy;
 domain_base_type(factorio_init_set_t);
-typeattribute factorio_init_set_t, can_relabelto_binary_policy;
 auditallow factorio_init_t factorio_init_set_t:process { transition };
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
