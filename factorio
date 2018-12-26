@@ -401,7 +401,8 @@ set_perms(){
  
   if [[ ${SELINUX} -eq 1 ]]; then
   	echo "Applying SELINUX security contexts ..."
-  	result=$(restorecon -R -v ${FACTORIO_PATH})
+  	restorecon -R -v ${FACTORIO_PATH};
+  	result=$?;
   	if [[ ${result} -ne 0 ]]; then
   	  echo "Failed to apply SELINUX security contexts for ${FACTORIO_PATH}"
   	  exit 1
