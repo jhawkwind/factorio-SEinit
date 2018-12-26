@@ -168,6 +168,8 @@ ME=`whoami`
 
 verify_user() { 
   SCRIPT_ARGS="${1}"
+  # TODO: What happens when the context is backwards?
+  # unconfined_u:unconfined_r:factorio_init_t:s0-s0:c0.c1023 root
   if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
     exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
     # Nothing will be executed beyond the above line,
