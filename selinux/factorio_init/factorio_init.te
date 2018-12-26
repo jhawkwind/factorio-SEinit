@@ -18,15 +18,16 @@ require {
 		type ld_so_t;
 		type fs_t;
 		type usr_t;
-		type restorecond_t;
 		type setfiles_exec_t;
 		role system_r;
 		role unconfined_r;
 		class filesystem { associate };
 		class dir { write getattr execute read search add_name };
 		class process { transition };
-		class capability { chown };
+		class capability { chown fowner };
 		class file { execute execute_no_trans entrypoint };
+		class netlink_selinux_socket { create };
+		class netlink_audit_socket { create };
 }
 ########################################
 #
@@ -59,13 +60,22 @@ auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
 
-#### Allow relabeling back to defined policies.
+#### Allow relabeling and ownership change back to defined policies.
+type factorio_init_set_t, can_relabelto_binary_policy;
 auditallow factorio_init_t factorio_init_set_t:process { transition };
-type factorio_init_set_t alias restorecond_t, can_relabelto_binary_policy;
-factorio_relabel_file_dirs(factorio_init_set_t);
-factorio_init_relabel_file_dirs(factorio_init_set_t);
 domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
+allow factorio_init_t self:netlink_selinux_socket { create };
+allow factorio_init_t self:netlink_audit_socket { create };
+allow factorio_init_set_t factorio_init_t:file { relabelto };
+allow factorio_init_set_t factorio_init_t:dir { relabelto };
+allow factorio_init_set_t factorio_t:file { relabelto };
+allow factorio_init_set_t factorio_t:dir { relabelto };
+allow factorio_init_set_t factorio_t:fifo_file { relabelto };
+allow factorio_init_set_t factorio_exec_t:file { relabelto };
+allow factorio_init_set_t factorio_tmp_t:file { relabelto };
+allow factorio_init_t self:capability { chown fowner };
+allow factorio_init_t factorio_t:capability { chown fowner };
 
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
@@ -82,8 +92,6 @@ allow factorio_init_t self:unix_dgram_socket { connect create write };
 allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
 allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
-allow factorio_init_t self:capability chown;
-allow factorio_init_t factorio_t:capability chown;
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name write };
