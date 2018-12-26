@@ -2,25 +2,13 @@ policy_module(factorio, 1.1.0)
 
 ########################################
 #
-# Declarations
-#
-
-type factorio_t;
-type factorio_exec_t, file_type, exec_type;
-type factorio_tmp_t, file_type, tmpfile;
-domain_type(factorio_t);
-
-
-# You can uncomment this line and re-compile the module to debug permission issues.
-#permissive factorio_t;
-
-
-########################################
-#
 # factorio local policy
 #
 
 require {
+		attribute file_type;
+		attribute exec_type;
+		attribute tmpfile;
 		type unconfined_t;
 		type ld_so_t;
 		type tmp_t;
@@ -37,7 +25,20 @@ require {
         class udp_socket { bind connect create getattr setopt };
         class dir { getattr execute read search add_name };
 }
+
+########################################
+#
+# Declarations
+#
+
+type factorio_t;
+type factorio_exec_t, file_type, exec_type;
+type factorio_tmp_t, file_type, tmpfile;
+domain_type(factorio_t);
 role system_r types factorio_t;
+
+# You can uncomment this line and re-compile the module to debug permission issues.
+#permissive factorio_t;
 
 #============= Auditing ==============
 auditallow factorio_t factorio_exec_t:file { entrypoint }; # add auditing to init_domain()
