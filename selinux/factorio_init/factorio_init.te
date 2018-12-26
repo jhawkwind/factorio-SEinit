@@ -75,15 +75,21 @@ allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh 
 files_list_root(factorio_init_set_t); # Must be able to read root.
 dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
 userdom_use_inherited_user_ptys(factorio_init_set_t); # This is used to display results.
-allow factorio_init_set_t factorio_init_t:file { relabelto manage_file_perms };
-allow factorio_init_set_t factorio_init_t:dir { relabelto manage_dir_perms };
-allow factorio_init_set_t factorio_t:file { relabelto manage_file_perms };
-allow factorio_init_set_t factorio_t:dir { relabelto manage_dir_perms };
-allow factorio_init_set_t factorio_t:fifo_file { relabelto manage_fifo_file_perms };
-allow factorio_init_set_t factorio_exec_t:file { relabelto manage_file_perms };
-allow factorio_init_set_t factorio_tmp_t:file { relabelto manage_file_perms };
+seutil_read_config(factorio_init_set_t); # Read the policy files to apply
+seutil_read_default_contexts(factorio_init_set_t); # Read the policy files to apply
+seutil_read_file_contexts(factorio_init_set_t); # Read the policy files to apply
+allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:file { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:dir { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:fifo_file { relabelfrom relabelto manage_fifo_file_perms };
+allow factorio_init_set_t factorio_exec_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t factorio_tmp_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t self:capability { fowner };
 allow factorio_init_t self:capability { chown fowner fsetid setuid setgid};
 allow factorio_init_t factorio_t:capability { chown fowner fsetid setuid setgid};
+permissive factorio_init_set_t;
+
 
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
