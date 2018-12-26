@@ -68,6 +68,7 @@ allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read
 allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
 allow factorio_init_t self:capability chown;
+allow factorio_init_t factorio_t:capability chown;
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name write };
