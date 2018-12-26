@@ -80,7 +80,7 @@ seutil_read_default_contexts(factorio_init_set_t); # Read the policy files to ap
 seutil_read_file_contexts(factorio_init_set_t); # Read the policy files to apply
 allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
 allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
-allow factorio_init_set_t factorio_t:file { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:file { relabelfrom relabelto manage_file_perms };
 allow factorio_init_set_t factorio_t:dir { relabelfrom relabelto manage_dir_perms };
 allow factorio_init_set_t factorio_t:fifo_file { relabelfrom relabelto manage_fifo_file_perms };
 allow factorio_init_set_t factorio_exec_t:file { relabelfrom relabelto manage_file_perms };
