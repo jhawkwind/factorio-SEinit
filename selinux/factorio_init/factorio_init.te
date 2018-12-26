@@ -61,8 +61,9 @@ domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
 
 # Allow the init_t user to execute SU and change user.
-can_exec(factorio_init_t,su_exec_t);
-selinux_compute_access_vector(factorio_init_t)
+#can_exec(factorio_init_t,su_exec_t);
+#selinux_compute_access_vector(factorio_init_t);
+su_exec(factorio_init_t);
 
 #### Allow relabeling and ownership change back to defined policies.
 type factorio_init_set_t, can_relabelto_binary_policy; # Inherit initial permissions from factorio_init_t, then add more permissions.
