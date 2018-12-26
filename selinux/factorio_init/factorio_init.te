@@ -19,6 +19,7 @@ require {
 		type fs_t;
 		type usr_t;
 		type restorecon_t;
+		type setfiles_exec_t;
 		role system_r;
 		role unconfined_r;
 		class filesystem { associate };
