@@ -6,8 +6,8 @@ policy_module(factorio, 1.1.0)
 #
 
 type factorio_t;
-type factorio_exec_t;
-type factorio_tmp_t;
+type factorio_exec_t, file_type, exec_type;
+type factorio_tmp_t, file_type, tmpfile;
 domain_type(factorio_t);
 
 

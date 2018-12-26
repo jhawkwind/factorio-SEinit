@@ -5,9 +5,9 @@ policy_module(factorio_init, 1.1.0)
 # Declarations
 #
 
-type factorio_init_t;
-type factorio_init_exec_t;
-type factorio_init_conf_t;
+type factorio_init_t, domain;
+type factorio_init_exec_t, file_type, exec_type;
+type factorio_init_conf_t, file_type, configfile;
 init_daemon_domain(factorio_init_t, factorio_init_exec_t)
 
 # You can uncomment this line and re-compile the module to debug permission issues.
@@ -19,6 +19,7 @@ init_daemon_domain(factorio_init_t, factorio_init_exec_t)
 #
 
 require {
+		attribute can_relabelto_binary_policy;
 		type unconfined_t;
 		type tmp_t;
 		type factorio_t;
@@ -26,6 +27,7 @@ require {
 		type ld_so_t;
 		type fs_t;
 		type usr_t;
+		type restorecon_t;
 		role system_r;
 		role unconfined_r;
 		class filesystem { associate };
@@ -51,6 +53,14 @@ factorio_init_exec(unconfined_t);
 auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
 domain_entry_file(factorio_init_t, factorio_init_exec_t);
 factorio_init_exec(factorio_init_t); # Allow recursive execution.
+
+#### Allow relabeling back to defined policies.
+auditallow factorio_init_t factorio_init_set_t:process { transition };
+type factorio_init_set_t alias restorecon_t, can_relabelto_binary_policy;
+factorio_relabel_file_dirs(factorio_init_set_t);
+factorio_init_relabel_file_dirs(factorio_init_set_t);
+domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
+can_exec(factorio_init_t,setfiles_exec_t);
 
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
