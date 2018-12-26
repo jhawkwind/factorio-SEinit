@@ -70,7 +70,7 @@ domain_entry_file(factorio_init_set_t,setfiles_exec_t);
 role unconfined_r types factorio_init_set_t; # Allow ONLY Unconfined roles to access this domain. Confined roles should not come here.
 allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
 allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
-allow factorio_init_t self:netlink_audit_socket { create write }; # This is to send auditing information to the log
+allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay }; # This is to send auditing information to the log
 allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
 files_list_root(factorio_init_set_t); # Must be able to read root.
 dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
@@ -88,6 +88,21 @@ allow factorio_init_set_t factorio_tmp_t:file { relabelfrom relabelto manage_fil
 allow factorio_init_set_t self:capability { fowner };
 allow factorio_init_t self:capability { chown fowner fsetid setuid setgid};
 allow factorio_init_t factorio_t:capability { chown fowner fsetid setuid setgid};
+
+# This is restorcon searching all devices and filesystems for things to apply. Restorcon is being greedy.
+dev_getattr_fs(factorio_init_set_t)
+dev_getattr_sysfs_fs(factorio_init_set_t)
+fs_getattr_cgroup(factorio_init_set_t)
+fs_getattr_hugetlbfs(factorio_init_set_t)
+fs_getattr_tmpfs(factorio_init_set_t)
+fs_getattr_xattr_fs(factorio_init_set_t)
+fs_list_hugetlbfs(factorio_init_set_t)
+fs_search_cgroup_dirs(factorio_init_set_t)
+logging_read_audit_log(factorio_init_set_t)
+term_getattr_pty_fs(factorio_init_set_t)
+term_search_ptys(factorio_init_set_t)
+xserver_search_xdm_tmp_dirs(factorio_init_set_t)
+
 permissive factorio_init_set_t;
 
 
