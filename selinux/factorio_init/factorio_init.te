@@ -72,12 +72,7 @@ allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
 allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
 allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay }; # This is to send auditing information to the log
 allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
-files_list_root(factorio_init_set_t); # Must be able to read root.
-dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
-userdom_use_inherited_user_ptys(factorio_init_set_t); # This is used to display results.
-seutil_read_config(factorio_init_set_t); # Read the policy files to apply
-seutil_read_default_contexts(factorio_init_set_t); # Read the policy files to apply
-seutil_read_file_contexts(factorio_init_set_t); # Read the policy files to apply
+
 allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
 allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
 allow factorio_init_set_t factorio_t:file { relabelfrom relabelto manage_file_perms };
@@ -88,21 +83,28 @@ allow factorio_init_set_t factorio_tmp_t:file { relabelfrom relabelto manage_fil
 allow factorio_init_set_t self:capability { fowner };
 allow factorio_init_t self:capability { chown fowner fsetid setuid setgid};
 allow factorio_init_t factorio_t:capability { chown fowner fsetid setuid setgid};
+files_list_root(factorio_init_set_t); # Must be able to read root.
+dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
+userdom_use_inherited_user_ptys(factorio_init_set_t); # This is used to display results.
+seutil_read_config(factorio_init_set_t); # Read the policy files to apply
+seutil_read_default_contexts(factorio_init_set_t); # Read the policy files to apply
+seutil_read_file_contexts(factorio_init_set_t); # Read the policy files to apply
 
 # This is restorcon searching all devices and filesystems for things to apply. Restorcon is being greedy.
-dev_getattr_fs(factorio_init_set_t)
-dev_getattr_sysfs_fs(factorio_init_set_t)
-fs_getattr_cgroup(factorio_init_set_t)
-fs_getattr_hugetlbfs(factorio_init_set_t)
-fs_getattr_tmpfs(factorio_init_set_t)
-fs_getattr_xattr_fs(factorio_init_set_t)
-fs_list_hugetlbfs(factorio_init_set_t)
-fs_search_cgroup_dirs(factorio_init_set_t)
-logging_read_audit_log(factorio_init_set_t)
-term_getattr_pty_fs(factorio_init_set_t)
-term_search_ptys(factorio_init_set_t)
-xserver_search_xdm_tmp_dirs(factorio_init_set_t)
+dev_getattr_fs(factorio_init_set_t);
+dev_getattr_sysfs_fs(factorio_init_set_t);
+fs_getattr_cgroup(factorio_init_set_t);
+fs_getattr_hugetlbfs(factorio_init_set_t);
+fs_getattr_tmpfs(factorio_init_set_t);
+fs_getattr_xattr_fs(factorio_init_set_t);
+fs_list_hugetlbfs(factorio_init_set_t);
+fs_search_cgroup_dirs(factorio_init_set_t);
+logging_read_audit_log(factorio_init_set_t);
+term_getattr_pty_fs(factorio_init_set_t);
+term_search_ptys(factorio_init_set_t);
+userdom_search_user_tmp_dirs(factorio_init_set_t);
 
+# Always permit this to override.
 permissive factorio_init_set_t;
 
 
