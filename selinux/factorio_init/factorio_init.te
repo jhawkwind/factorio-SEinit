@@ -2,23 +2,14 @@ policy_module(factorio_init, 1.1.0)
 
 ########################################
 #
-# Declarations
-#
-
-type factorio_init_t, domain;
-type factorio_init_exec_t, file_type, exec_type;
-type factorio_init_conf_t, file_type, configfile;
-init_daemon_domain(factorio_init_t, factorio_init_exec_t)
-
-# You can uncomment this line and re-compile the module to debug permission issues.
-#permissive factorio_init_t;
-
-########################################
-#
 # factorio local policy
 #
 
 require {
+		attribute domain;
+		attribute file_type;
+		attribute exec_type;
+		attribute configfile;
 		attribute can_relabelto_binary_policy;
 		type unconfined_t;
 		type tmp_t;
@@ -36,6 +27,19 @@ require {
 		class capability { chown };
 		class file { execute execute_no_trans entrypoint };
 }
+########################################
+#
+# Declarations
+#
+
+type factorio_init_t, domain;
+type factorio_init_exec_t, file_type, exec_type;
+type factorio_init_conf_t, file_type, configfile;
+init_daemon_domain(factorio_init_t, factorio_init_exec_t)
+
+# You can uncomment this line and re-compile the module to debug permission issues.
+#permissive factorio_init_t;
+
 role system_r types factorio_init_t;
 role unconfined_r types factorio_init_t;
 
