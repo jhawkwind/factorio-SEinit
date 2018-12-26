@@ -67,8 +67,12 @@ domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
 can_exec(factorio_init_t,setfiles_exec_t);
 domain_entry_file(factorio_init_set_t,setfiles_exec_t);
 role unconfined_r types factorio_init_set_t;
-allow factorio_init_t self:netlink_selinux_socket { create bind };
-allow factorio_init_t self:netlink_audit_socket { create write };
+allow factorio_init_t root_t:dir read_dir_perms; # Must allow to go down the root.
+allow factorio_init_t usr_t:dir read_dir_perms; # Must allow to go down opt.
+allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
+allow factorio_init_t self:netlink_audit_socket { create write }; # This is to send auditing information to the log
+allow factorio_init_set_t user_devpts_t:chr_file { read write open }; # This is to output results.
+allow factorio_init_set_t sshd_t:fd { use }; # This is used to output results.
 allow factorio_init_set_t factorio_init_t:file { relabelto };
 allow factorio_init_set_t factorio_init_t:dir { relabelto };
 allow factorio_init_set_t factorio_t:file { relabelto };
