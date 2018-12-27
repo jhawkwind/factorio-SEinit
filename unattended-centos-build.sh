@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This unattended script is to make it quick using as many "defaults" as possible.
+
 USERNAME="${1}"
 TOKEN="${2}"
 SERVER_NAME="${3}"
@@ -9,10 +11,13 @@ FACTORIO_DIR="/opt/factorio"
 GLIBC_DIR="/opt/glibc-2.18"
 
 # Presume it is done, since this file is on the system.
-# yum -y install git
-# git clone --recurse-submodules -b experimental https://github.com/jhawkwind/factorio-SEinit ${INIT_DIR}
+# umask 0022;
+# yum -y install git; git clone --recurse-submodules -b experimental https://github.com/jhawkwind/factorio-SEinit ${INIT_DIR}; chown -R root:root ${INIT_DIR}
+# semanage permissive -a unconfined_t; # This is safer.
+# chcon -R -u unconfined_u -r unconfined_r -t home_t -v ${INIT_DIR}; chcon -R -u unconfined_u -r unconfined_r -t home_bin_t -v ${INIT_DIR}/unattended-centos-build.sh;
+# chown -R root:root ${INIT_DIR}/
+# chmod 755 ${INIT_DIR}/
 # chmod 755 ${INIT_DIR}/unattended-centos-build.sh
-# chcon -u unconfined_u -r unconfined_r -t unconfined_t ${INIT_DIR}/unattended-centos-build.sh
 
 # Pull sources
 umask 0022
@@ -47,21 +52,21 @@ chmod 755 ${INIT_DIR}/selinux/compile.sh
 chmod 755 ${INIT_DIR}/selinux/factorio/factorio.sh
 chmod 755 ${INIT_DIR}/selinux/factorio-init/factorio-init.sh
 
-/opt/factorio-init/selinux/compile.sh
+${INIT_DIR}/selinux/compile.sh
 semodule --disable_dontaudit --build
 
 restorecon -R -F -v /opt/factorio-init
-/opt/factorio-init/factorio install
+${INIT_DIR}/factorio install
 
-cp /opt/factorio/data/server-settings.example.json /opt/factorio/data/server-settings.json
-chown factorio:factorio /opt/factorio/data/server-settings.json
-restorecon -F -v /opt/factorio/data/server-settings.json
-sed -i -e 's/"public": true/"public": false/g' /opt/factorio/data/server-settings.json
-sed -i -e "s/\"username\": \"\"/\"username\": \"${USERNAME}\"/g" /opt/factorio/data/server-settings.json
-sed -i -e "s/\"token\": \"\"/\"token\": \"${TOKEN}\"/g" /opt/factorio/data/server-settings.json
-sed -i -e "s/\"admins\": \[\]/\"admins\": [ \"${USERNAME}\" ]/g" /opt/factorio/data/server-settings.json
-sed -i -e "s/\"name\": \"[^\\\"]*\"/\"name\": \"${SERVER_NAME}\"/g" /opt/factorio/data/server-settings.json
-sed -i -e "s/\"description\": \"[^\\\"]*\"/\"description\": \"${SERVER_DESCRIPTION}\"/g" /opt/factorio/data/server-settings.json
+cp ${FACTORIO_DIR}/data/server-settings.example.json ${FACTORIO_DIR}/data/server-settings.json
+chown factorio:factorio ${FACTORIO_DIR}/data/server-settings.json
+restorecon -F -v ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e 's/"public": true/"public": false/g' ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e "s/\"username\": \"\"/\"username\": \"${USERNAME}\"/g" ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e "s/\"token\": \"\"/\"token\": \"${TOKEN}\"/g" ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e "s/\"admins\": \[\]/\"admins\": [ \"${USERNAME}\" ]/g" ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e "s/\"name\": \"[^\\\"]*\"/\"name\": \"${SERVER_NAME}\"/g" ${FACTORIO_DIR}/data/server-settings.json
+sed -i -e "s/\"description\": \"[^\\\"]*\"/\"description\": \"${SERVER_DESCRIPTION}\"/g" ${FACTORIO_DIR}/data/server-settings.json
 
 cp ${INIT_DIR}/factorio.service.example /etc/systemd/system/factorio.service
 systemctl daemon-reload
