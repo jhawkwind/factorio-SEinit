@@ -415,7 +415,7 @@ set_perms(){
 install(){
   if [ "${SELINUX}" -eq 1 ]; then
     factorio_init_context_string="^unconfined_u:unconfined_r:unconfined_t:.*"
-    if [[ ! "$(id -Z)" =~ ${factorio_init_context_string} ]] || [ "$(id -u)" =! "0" ]; then
+    if ( ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]] ) || [ "$(id -u)" =! "0" ]; then
       echo "You must run this as root with the proper unconfined_u:unconfined_r:unconfined_t context!";
       echo "HINT: sudo su -- runcon -u unconfined_u -r unconfined_r -t unconfined_t -- /opt/factorio-init/factorio install" 
       exit 1;
