@@ -9,6 +9,7 @@ FACTORIO_DIR="/opt/factorio"
 GLIBC_DIR="/opt/glibc-2.18"
 
 # Presume it is done, since this file is on the system.
+# yum -y install git
 # git clone --recurse-submodules -b experimental https://github.com/jhawkwind/factorio-SEinit ${INIT_DIR}
 # chmod 755 ${INIT_DIR}/unattended-centos-build.sh
 # chcon -u unconfined_u -r unconfined_r -t unconfined_t ${INIT_DIR}/unattended-centos-build.sh
