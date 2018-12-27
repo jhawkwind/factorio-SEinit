@@ -505,7 +505,7 @@ install(){
     echo "The factorio-init config is not of the correct permission."
     echo "HINT: chmod 640 ${SCRIPT_DIR}/config"
     exit 1;
-  elif ! ([[ "$(stat -c %G ${SCRIPT_DIR}/config)" == "${USERGROUP}"]] && [[ "$(stat -c %U ${SCRIPT_DIR}/config)" == "${USERNAME}"]]); then
+  elif ! ( [[ "$(stat -c %G ${SCRIPT_DIR}/config)" == "${USERGROUP}" ]] && [[ "$(stat -c %U ${SCRIPT_DIR}/config)" == "${USERNAME}" ]] ); then
     echo "The facatorio-init config is not the proper owner/group."
     echo "HINT: chown ${USERNAME}:${USERGROUP} ${SCRIPT_DIR}/config"
     exit 1;
