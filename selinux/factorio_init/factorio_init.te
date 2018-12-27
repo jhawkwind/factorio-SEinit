@@ -19,6 +19,7 @@ require {
 		type fs_t;
 		type usr_t;
 		type setfiles_exec_t;
+		type unconfined_service_t;
 		role system_r;
 		role unconfined_r;
 		class filesystem { associate };
@@ -56,6 +57,12 @@ allow unconfined_t factorio_init_t:process { transition };
 allow unconfined_t factorio_init_exec_t:file { entrypoint };
 allow unconfined_t factorio_init_exec_t:file { execute read_file_perms };
 factorio_init_exec(unconfined_t);
+
+allow unconfined_service_t factorio_init_t:process { transition };
+allow unconfined_service_t factorio_init_exec_t:file { entrypoint };
+allow unconfined_service_t factorio_init_exec_t:file { execute read_file_perms };
+factorio_init_exec(unconfined_service_t);
+type_transition unconfined_service_t factorio_init_exec_t:file factorio_init_t;
 
 #============= factorio_init_t ==============
 #
