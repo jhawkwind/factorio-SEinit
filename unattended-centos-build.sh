@@ -28,14 +28,17 @@ useradd -c "Factorio Server account" -d ${FACTORIO_DIR} -M -s /usr/sbin/nologin 
 make
 make install
 
-cp /opt/factorio-init/config.example /opt/factorio-init/config
-sed -i -e 's/SELINUX=0/SELINUX=1/g' /opt/factorio-init/config
-sed -i -e 's/WAIT_PINGPONG=0/WAIT_PINGPONG=1/g' /opt/factorio-init/config
-sed -i -e "s/FACTORIO_PATH=.*/FACTORIO_PATH=${FACTORIO_DIR}/g" /opt/factorio-init/config
-sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" /opt/factorio-init/config
-sed -i -e 's/ALT_GLIBC=0/ALT_GLIBC=1/g' /opt/factorio-init/config
-sed -i -e "s/UPDATE_USERNAME=you/UPDATE_USERNAME=${USERNAME}/g" /opt/factorio-init/config
-sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" /opt/factorio-init/config
+cp /opt/factorio-init/config.example ${INIT_DIR}/config
+sed -i -e 's/SELINUX=0/SELINUX=1/g' ${INIT_DIR}/config
+sed -i -e 's/WAIT_PINGPONG=0/WAIT_PINGPONG=1/g' ${INIT_DIR}/config
+sed -i -e "s/FACTORIO_PATH=.*/FACTORIO_PATH=${FACTORIO_DIR}/g" ${INIT_DIR}/config
+sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" ${INIT_DIR}/config
+sed -i -e 's/ALT_GLIBC=0/ALT_GLIBC=1/g' ${INIT_DIR}/config
+sed -i -e "s/UPDATE_USERNAME=you/UPDATE_USERNAME=${USERNAME}/g" ${INIT_DIR}/config
+sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" ${INIT_DIR}/config
+
+chmod 640 ${INIT_DIR}/config
+chown root:factorio ${INIT_DIR}/config
 
 find ${INIT_DIR} -type d -exec chmod 755 {} \;
 find ${INIT_DIR} -type f -file chmod 644 {} \;
