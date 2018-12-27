@@ -48,8 +48,8 @@ role unconfined_r types factorio_init_t;
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
-factorio_init_manage_file_dirs(unconfined_t);
-factorio_init_relabel_file_dirs(unconfined_t);
+allow unconfined_t factorio_init_t:dirs { manage_dir_perms relabelto relabelfrom };
+allow unconfined_t factorio_init_t:file { manage_file_perms relabelto relabelfrom -execute };
 
 # Allow transition
 # factorio_init_domtrans(unconfined_t); DO NOT do this, we don't want to auto transition.
