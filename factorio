@@ -418,7 +418,7 @@ set_perms(){
   fi
 
   echo "Applying file permissions (factorio) ..."
-  result=$(find ${FACTORIO_PATH} -type d -file chmod 644 {} \;)
+  result=$(find ${FACTORIO_PATH} -type f -file chmod 644 {} \;)
   if [[ ${result} -ne 0 ]]; then
     echo "Failed to apply file permission for ${FACTORIO_PATH}"
     exit 1

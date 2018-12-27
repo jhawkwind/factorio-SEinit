@@ -22,7 +22,7 @@ cat ./factorio_init/factorio_init.if.backup > ./factorio_init/factorio_init.if
 
 sleep 3;
 
-semodule --disable_dontaudit --build # For Debugging purposes.
+# semodule --disable_dontaudit --build # For Debugging purposes.
 
 pwd=$(pwd)
-#rpmbuild --define "_sourcedir ${pwd}/build" --define "_specdir ${pwd}/build" --define "_builddir ${pwd}/build" --define "_srcrpmdir ${pwd}/build" --define "_rpmdir ${pwd}/build" --define "_buildrootdir ${pwd}/build/.build"  -ba ${pwd}/build/factorio_selinux.spec
+# rpmbuild --define "_sourcedir ${pwd}/build" --define "_specdir ${pwd}/build" --define "_builddir ${pwd}/build" --define "_srcrpmdir ${pwd}/build" --define "_rpmdir ${pwd}/build" --define "_buildrootdir ${pwd}/build/.build"  -ba ${pwd}/build/factorio_selinux.spec
