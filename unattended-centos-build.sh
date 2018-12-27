@@ -4,7 +4,7 @@ USERNAME="${1}"
 TOKEN="${2}"
 SERVER_NAME="${3}"
 SERVER_DESCRIPTION="${4}"
-INIT_DIR="/opt/factorio_init"
+INIT_DIR="/opt/factorio-init"
 FACTORIO_DIR="/opt/factorio"
 GLIBC_DIR="/opt/glibc-2.18"
 
@@ -42,7 +42,7 @@ find ${INIT_DIR} -type f -file chmod 644 {} \;
 chmod 755 ${INIT_DIR}/factorio
 chmod 755 ${INIT_DIR}/selinux/compile.sh
 chmod 755 ${INIT_DIR}/selinux/factorio/factorio.sh
-chmod 755 ${INIT_DIR}/selinux/factorio_init/factorio_init.sh
+chmod 755 ${INIT_DIR}/selinux/factorio-init/factorio-init.sh
 
 /opt/factorio-init/selinux/compile.sh
 semodule --disable_dontaudit --build
