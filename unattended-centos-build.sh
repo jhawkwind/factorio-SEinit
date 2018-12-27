@@ -18,6 +18,8 @@ GLIBC_DIR="/opt/glibc-2.18"
 # chown -R root:root ${INIT_DIR}/
 # chmod 755 ${INIT_DIR}/
 # chmod 755 ${INIT_DIR}/unattended-centos-build.sh
+# semanage permissive -d unconfined_t; # Return configuration.
+
 
 # Pull sources
 umask 0022
@@ -63,9 +65,13 @@ chmod 750 ${INIT_DIR}/patches;
 chmod 750 ${INIT_DIR}/glibc;
 
 ${INIT_DIR}/selinux/compile.sh
-semodule --disable_dontaudit --build
 
-restorecon -R -F -v /opt/factorio-init
+# The compile script is dumb with the restorecon, make sure it did it to the correct place.
+restorecon -R -F -v ${INIT_DIR}
+restorecon -R -F -v ${GLIBC_DIR}
+restorecon -R -F -v ${FACTORIO_DIR}
+
+semodule --disable_dontaudit --build # Debugging only, noisy.
 ${INIT_DIR}/factorio install
 
 cp ${FACTORIO_DIR}/data/server-settings.example.json ${FACTORIO_DIR}/data/server-settings.json
