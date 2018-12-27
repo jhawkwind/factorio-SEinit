@@ -57,8 +57,11 @@ cp /opt/factorio/data/server-settings.example.json /opt/factorio/data/server-set
 chown factorio:factorio /opt/factorio/data/server-settings.json
 restorecon -F -v /opt/factorio/data/server-settings.json
 sed -i -e 's/"public": true/"public": false/g' /opt/factorio/data/server-settings.json
-sed -i -e "s/\"username\": ""/\"username\": \"${USERNAME}\"/g" /opt/factorio/data/server-settings.json
+sed -i -e "s/\"username\": \"\"/\"username\": \"${USERNAME}\"/g" /opt/factorio/data/server-settings.json
 sed -i -e "s/\"token\": \"\"/\"token\": \"${TOKEN}\"/g" /opt/factorio/data/server-settings.json
 sed -i -e "s/\"admins\": \[\]/\"admins\": [ \"${USERNAME}\" ]/g" /opt/factorio/data/server-settings.json
 sed -i -e "s/\"name\": \"[^\\\"]*\"/\"name\": \"${SERVER_NAME}\"/g" /opt/factorio/data/server-settings.json
 sed -i -e "s/\"description\": \"[^\\\"]*\"/\"description\": \"${SERVER_DESCRIPTION}\"/g" /opt/factorio/data/server-settings.json
+
+cp ${INIT_DIR}/factorio.service.example /etc/systemd/system/factorio.service
+systemctl daemon-reload

@@ -15,7 +15,7 @@ Type=forking
 TimeoutStartSec=20
 ExecStart=/bin/runcon -t factorio_init_t -r system_r -u system_u -- /opt/factorio-init/factorio start
 TimeoutStopSec=20
-ExecStop=/binruncon -t factorio_init_t -r system_r -u system_u -- /opt/factorio-init/factorio stop
+ExecStop=/bin/runcon -t factorio_init_t -r system_r -u system_u -- /opt/factorio-init/factorio stop
 RestartSec=20
 Restart=on-failure
 

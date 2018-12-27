@@ -22,6 +22,8 @@ chmod 755 /opt/factorio-init/
 chmod 755 /opt/factorio-init/unattended-centos-build.sh
 /opt/factorio-init/unattended-centos-build.sh '<USERNAME>' '<TOKEN>' '<SERVER NAME>' '<SERVER DESCRIPTION>'
 semanage permissive -d unconfined_t; # Return configuration.
+systemctl enable factorio
+systemctl start factorio
 ```
 
 ## TODO
