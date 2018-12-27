@@ -206,11 +206,15 @@ verify_user() {
 
 }
 
-as_user() {
-  if [ $ME == $USERNAME ]; then # Are we the factorio user? # This will always happen.
-    bash -c "$1"
-  elif [ "$(id -u)" == "0" ]; then # Are we root? # This will only happen on install.
-    su $USERNAME -s /bin/bash -c "$1"
+run_context() {
+  if [ $ME == $USERNAME ]; then 
+    # Make sure we are running as factorio user.
+    # Then if running with SELINUX, change context.
+    if [ "${SELINUX}" -eq 1 ]; then
+      runcon -u system_u -r system_r -t factorio_t -- ${1}
+    else
+      /bin/bash "$1"
+    fi
   else
     # To prevent odd permission behaviour, either 
     # run this script as the configured user or as root
@@ -265,7 +269,7 @@ start_service() {
     wait_pingpong
   fi
 
-  as_user "tail -f ${FIFO} |${INVOCATION} ${EXE_ARGS_GLIBC}>> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
+  run_context "tail -f ${FIFO} |${INVOCATION} ${EXE_ARGS_GLIBC}>> ${CMDOUT} 2>&1 & echo \$! > ${PIDFILE}"
 
   ps -p $(cat ${PIDFILE}) > /dev/null 2>&1
   if [ "$?" -ne "0" ]; then
@@ -375,24 +379,24 @@ check_permissions(){
     exit 1
   fi
 
-  if ! as_user "test -w ${WRITE_DIR}" ; then
+  if ! run_context "test -w ${WRITE_DIR}" ; then
     echo "Check Permissions. Cannot write to ${WRITE_DIR}"
     exit 1
   fi
 
-  if ! as_user "touch ${PIDFILE}" ; then
+  if ! run_context "touch ${PIDFILE}" ; then
     echo "Check Permissions. Cannot touch pidfile ${PIDFILE}"
     exit 1
   fi
 
   if ! [ -p ${FIFO} ]; then
-    if ! as_user "mkfifo ${FIFO}"; then
+    if ! run_context "mkfifo ${FIFO}"; then
       echo "Failed to create pipe for stdin, if applicable, remove ${FIFO} and try again"
       exit 1
     fi
   fi
 
-  if ! as_user "touch ${CMDOUT}" ; then
+  if ! run_context "touch ${CMDOUT}" ; then
     echo "Check Permissions. Cannot touch cmd output file ${CMDOUT}"
     exit 1
   fi
@@ -587,7 +591,7 @@ install(){
 
 init-server(){
   if [ ! -f "${SERVER_SETTINGS}" ]; then
-    as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
+    run_context "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
     resutling_status=$?;
     exit ${resutling_status};
   else
@@ -597,11 +601,11 @@ init-server(){
 }
 
 get_bin_version(){
-  echo `as_user "$BINARY --version |egrep '^Version: [0-9\.]+' |egrep -o '[0-9\.]+' |head -n 1"`
+  echo `run_context "$BINARY --version |egrep '^Version: [0-9\.]+' |egrep -o '[0-9\.]+' |head -n 1"`
 }
 
 get_bin_arch(){
-  echo `as_user "$BINARY --version |egrep '^Binary version: ' |egrep -o '[0-9]{2}'"`
+  echo `run_context "$BINARY --version |egrep '^Binary version: ' |egrep -o '[0-9]{2}'"`
 }
 
 update(){
@@ -631,7 +635,7 @@ update(){
   fi
 
   # Create tmpdir and ensure automatic cleanup
-  tmpdir=`as_user "mktemp -d -p ${UPDATE_TMPDIR} factorio-update.XXXXXXXXXX"`
+  tmpdir=`run_context "mktemp -d -p ${UPDATE_TMPDIR} factorio-update.XXXXXXXXXX"`
   if [ $? -ne 0 ]; then
     echo "Aborting update! Unable to create tmpdir: ${tmpdir}"
     exit 1
@@ -650,7 +654,7 @@ update(){
   fi
 
   echo "Checking for updates..."
-  result=`as_user "${invocation} --dry-run"`
+  result=`run_context "${invocation} --dry-run"`
   exitcode=$?
   if [ ${exitcode} -eq 1 -o ${exitcode} -gt 2 ]; then
     debug "Invocation: ${invocation}"
@@ -679,7 +683,7 @@ update(){
   fi
 
   # Time to download the updates
-  if ! as_user "${invocation}"; then
+  if ! run_context "${invocation}"; then
     echo "Aborting update!"
     exit 1
   fi
@@ -694,7 +698,7 @@ update(){
 
   for patch in $(find ${tmpdir} -type f -name "*.zip" | sort -V); do
     echo "Applying ${patch} ..."
-    result=`as_user "$BINARY --apply-update ${patch} ${EXE_ARGS_GLIBC}"`
+    result=`run_context "$BINARY --apply-update ${patch} ${EXE_ARGS_GLIBC}"`
     exitcode=$?
     if [ $exitcode -gt 0 ]; then
       echo "${result}"
@@ -871,7 +875,7 @@ case "$1" in
       fi
     fi
 
-    if ! as_user "$createsavecmd"; then
+    if ! run_context "$createsavecmd"; then
       echo "Failed to create new game"
       exit 1
     else
@@ -894,7 +898,7 @@ case "$1" in
     fi
 
     lastsave=$(find "${WRITE_DIR}/saves" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" ")
-    if ! as_user "cp \"${lastsave}\" \"${savename}\""; then
+    if ! run_context "cp \"${lastsave}\" \"${savename}\""; then
       echo "Error! Failed to save game"
       exit 1
     fi
@@ -920,7 +924,7 @@ case "$1" in
     fi
 
     # Touch the new save file
-    as_user "touch \"${newsave}\""
+    run_context "touch \"${newsave}\""
     ;;
   install)
     install "$2"
