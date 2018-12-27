@@ -420,7 +420,7 @@ install(){
       echo "HINT: sudo su -- runcon -u unconfined_u -r unconfined_r -t unconfined_t -- /opt/factorio-init/factorio install" 
       exit 1;
     fi
-  elif [ "$(id -u)" =! "0" ]
+  elif [ "$(id -u)" =! "0" ]; then
   	echo "You must execute this as root!"
   	exit 1;
   fi
