@@ -167,27 +167,43 @@ usage(){
 ME=`whoami`
 
 verify_user() { 
-  SCRIPT_ARGS="${1}"
-  # TODO: What happens when the context is backwards?
-  # unconfined_u:unconfined_r:factorio_init_t:s0-s0:c0.c1023 root
-  if [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
+  SCRIPT_ARGS="$@";
+  
+  factorio_init_context_string="^system_u:system_r:factorio_init_t:.*";
+  unconfined_context_string="^[^:\s]+:[^:\s]+:unconfined_t:.*";
+  
+  # Desired ideal: unconfined_u:unconfined_r:factorio_init_t:s0-s0:c0.c1023 factorio
+  if [ "${ME}" == "${USERNAME}" ] && [ "${SELINUX}" -ne 1 ]; then
+    # If SELINUX is not wanted and user is correct, just return. It is fine.
+    umask 0022; # Set this in case things are too restrictive for Factorio.
+    return 0;
+  elif [ "${ME}" != "${USERNAME}" ] && [ "$(id -u)" == "0" ]; then
+    # If the user is incorrect, but it is root, change it for the user to the user. (This will happen with right or wrong context).
     exec su "${USERNAME}" -s /bin/bash -c "${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
-    # Nothing will be executed beyond the above line,
-    # because exec replaces running process with the new one.
-    # But be cause we are paranoid.
     exit $?;
   elif [ "${ME}" == "${USERNAME}" ] && [ "${SELINUX}" -eq 1 ]; then
-    factorio_init_context_string="^system_u:system_r:factorio_init_t:.*"
-    if ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
-      runcon -t factorio_init_t -r system_r -u system_u -- ${SCRIPT_DIR}/factorio $@;
+    # If the user is correct, but SELINUX is needed, then check context.
+    if (! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]) && [[ "$(id -Z)" =~ ${unconfined_context_string} ]]; then
+      # If the user is correct, but context is wrong and it is unconfined, change the context for the user.
+      runcon -t factorio_init_t -r system_r -u system_u -- ${SCRIPT_DIR}/factorio ${SCRIPT_ARGS};
       exit $?;
+    elif [[ "$(id -Z)" =~ ${factorio_init_context_string} ]]; then
+      # If the context is correct, just return.
+      umask 0022; # Set this in case things are too restrictive for Factorio.
+      return 0;
     fi
-  else
-  	echo "You must run this script either as the ${USERNAME} user, or as root!";
-  	exit 1;
+  fi
+
+  # All other cases, things are wrong.
+  echo "You must run this script either as the ${USERNAME} user, or as root!";
+  if [ "${SELINUX}" -eq 1 ]; then
+    echo "You must run this script within the proper context: system_u:system_r:factorio_init_t.";
+    echo "HINT: su \"${USERNAME}\" -s /bin/bash -c 'runcon -u system_u -r system_r -t factorio_init_t -- ${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}'";
+    echo "HINT2: sudo -u \"${USERNAME}\" -- runcon -u system_u -r system_r -t factorio_init_t -- ${SCRIPT_DIR}/factorio ${SCRIPT_ARGS}";
   fi
   
-  umask 0022; # Set this in case things are too restrictive for Factorio.
+  exit 1;
+
 }
 
 as_user() {
@@ -394,13 +410,27 @@ set_perms(){
     exit 1
   fi
  
-  echo "Applying file permission ..."
+  echo "Applying directory permissions (factorio) ..."
   result=$(find ${FACTORIO_PATH} -type d -exec chmod 755 {} \;)
   if [[ ${result} -ne 0 ]]; then
-    echo "Failed to apply permission for ${FACTORIO_PATH}"
+    echo "Failed to apply directory permission for ${FACTORIO_PATH}"
     exit 1
   fi
- 
+
+  echo "Applying file permissions (factorio) ..."
+  result=$(find ${FACTORIO_PATH} -type d -file chmod 644 {} \;)
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply file permission for ${FACTORIO_PATH}"
+    exit 1
+  fi
+  
+  echo "Applying execute permissions (factorio/bin/x64/factorio) ..."
+  result=$(chmod 755 ${FACTORIO_PATH}/bin/x64/factorio);
+  if [[ ${result} -ne 0 ]]; then
+    echo "Failed to apply permission for ${FACTORIO_PATH}/bin/x64/factorio"
+    exit 1
+  fi
+  
   if [[ ${SELINUX} -eq 1 ]]; then
   	echo "Applying SELINUX security contexts ..."
   	restorecon -R -v ${FACTORIO_PATH};
@@ -413,21 +443,80 @@ set_perms(){
 }
 
 install(){
-  if [ "${SELINUX}" -eq 1 ]; then
-    factorio_init_context_string="^unconfined_u:unconfined_r:unconfined_t:.*"
-    if ( ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]] ) || [ "$(id -u)" =! "0" ]; then
-      echo "You must run this as root with the proper unconfined_u:unconfined_r:unconfined_t context!";
-      echo "HINT: sudo su -- runcon -u unconfined_u -r unconfined_r -t unconfined_t -- /opt/factorio-init/factorio install" 
-      exit 1;
-    fi
-  elif [ "$(id -u)" =! "0" ]; then
+
+  if [ "$(id -u)" =! "0" ]; then
   	echo "You must execute this as root!"
   	exit 1;
   fi
+  
+  if [[ "${SELINUX}" -eq 1 ]] || [[ "$(getenforce)" =~ (E|e)nforcing ]]; then
+    # Make sure user is running unconfined.
+    factorio_init_context_string="^unconfined_u:unconfined_r:unconfined_t:.*";
+    if ( ! [[ "$(id -Z)" =~ ${factorio_init_context_string} ]] ) || [ "$(id -u)" =! "0" ]; then
+      echo "You must run this as root with the proper unconfined_u:unconfined_r:unconfined_t context!";
+      echo "HINT: sudo su -- runcon -u unconfined_u -r unconfined_r -t unconfined_t -- /opt/factorio-init/factorio install";
+      exit 1;
+    fi
+    
+    # Make sure the directory has proper context.
+    factorio_init_dir_string="^system_u:object_r:factorio_init_t:.*";
+    if ! [[ "$(stat -c %C ${SCRIPT_DIR})" =~ ${factorio_init_dir_string} ]]; then
+      echo "You must properly set the context of the factorio-init directory.";
+      echo "HINT: chcon -u system_u -r object_r -t factorio_init_t ${SCRIPT_DIR}";
+      echo "HINT2: restorecon -F -R -v ${SCRIPT_DIR}";
+      exit 1;
+    fi
+    
+    # Make sure this file has proper context.
+    factorio_init_exec_string="^system_u:object_r:factorio_init_exec_t:.*";
+    if ! [[ "$(stat -c %C ${SCRIPT_DIR}/factorio)" =~ ${factorio_init_exec_string} ]]; then
+      echo "You must properly set the context of the factorio-init directory.";
+      echo "HINT: chcon -u system_u -r object_r -t factorio_init_exec_t ${SCRIPT_DIR}/factorio";
+      echo "HINT2: restorecon -F -R -v ${SCRIPT_DIR}";
+      exit 1;
+    fi
+    
+    # Make sure conf file has proper context.
+    factorio_init_conf_string="^system_u:object_r:factorio_init_conf_t:.*";
+    if ! [[ "$(stat -c %C ${SCRIPT_DIR}/config)" =~ ${factorio_init_conf_string} ]]; then
+      echo "You must properly set the context of the factorio-init directory.";
+      echo "HINT: chcon -u system_u -r object_r -t factorio_init_exec_t ${SCRIPT_DIR}/config";
+      echo "HINT2: restorecon -F -R -v ${SCRIPT_DIR}";
+      exit 1;
+    fi
+  fi
+  
+  # Make sure this directory is executable.
+  if [[ "$(stat -c %a ${SCRIPT_DIR})" != "755" ]]; then
+    echo "The factorio-init directory is not of the correct permission."
+    echo "HINT: chmod 755 ${SCRIPT_DIR}"
+    exit 1;
+  fi
+  
+  # Make sure this file is executable and not '/bin/bash -c'ed into.
+  if [[ "$(stat -c %a ${SCRIPT_DIR}/factorio)" != "755" ]]; then
+    echo "The factorio-init executable is not of the correct permission."
+    echo "HINT: chmod 755 ${SCRIPT_DIR}/factorio"
+    exit 1;
+  fi
+  
+  # Make sure the config is secure.
+  if [[ "$(stat -c %a ${SCRIPT_DIR}/config)" != "640" ]]; then
+    echo "The factorio-init config is not of the correct permission."
+    echo "HINT: chmod 640 ${SCRIPT_DIR}/config"
+    exit 1;
+  elif ! ([[ "$(stat -c %G ${SCRIPT_DIR}/config)" == "${USERGROUP}"]] && [[ "$(stat -c %U ${SCRIPT_DIR}/config)" == "${USERNAME}"]]); then
+    echo "The facatorio-init config is not the proper owner/group."
+    echo "HINT: chown ${USERNAME}:${USERGROUP} ${SCRIPT_DIR}/config"
+    exit 1;
+  fi
+  	
+  
   # Factorio comes packaged in a directory named "factorio"
   # Unless overriden in the config we will presume this is also the
   # name used in FACTORIO_PATH
   umask 0022;
+  
   expected_path="`dirname ${FACTORIO_PATH}`/${PACKAGE_DIR_NAME}"
   if ! [ "${FACTORIO_PATH}" == "${expected_path}" ]; then
     echo "Aborting install! FACTORIO_PATH does not match expected path: ${expected_path}"
@@ -500,7 +589,7 @@ init-server(){
   if [ ! -f "${SERVER_SETTINGS}" ]; then
     as_user "${BINARY} --create ${FACTORIO_PATH}/saves/server-save ${EXE_ARGS_GLIBC}";
     resutling_status=$?;
-    exit $?;
+    exit ${resutling_status};
   else
   	echo "You cannot re-initialize a server that is ALREADY initialized at ${SERVER_SETTINGS}!";
     exit 1;
