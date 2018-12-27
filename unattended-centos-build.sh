@@ -42,15 +42,25 @@ sed -i -e 's/ALT_GLIBC=0/ALT_GLIBC=1/g' ${INIT_DIR}/config
 sed -i -e "s/UPDATE_USERNAME=you/UPDATE_USERNAME=${USERNAME}/g" ${INIT_DIR}/config
 sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" ${INIT_DIR}/config
 
-chmod 640 ${INIT_DIR}/config
-chown root:factorio ${INIT_DIR}/config
-
-find ${INIT_DIR} -type d -exec chmod 755 {} \;
-find ${INIT_DIR} -type f -file chmod 644 {} \;
-chmod 755 ${INIT_DIR}/factorio
-chmod 755 ${INIT_DIR}/selinux/compile.sh
-chmod 755 ${INIT_DIR}/selinux/factorio/factorio.sh
-chmod 755 ${INIT_DIR}/selinux/factorio-init/factorio-init.sh
+# These permissions matter.
+chown -R root:root  ${INIT_DIR}; # Make sure expected defaults.
+find ${INIT_DIR} -type d -exec chmod 755 {} \; # Make sure expected defaults.
+find ${INIT_DIR} -type f -file chmod 644 {} \; # Make sure expected defaults.
+# Now change owners where access needs to be shared with the factorio user.
+chown root:factorio ${INIT_DIR};
+chown root:factorio ${INIT_DIR}/config;
+chown root:factorio ${INIT_DIR}/factorio;
+chown root:factorio ${INIT_DIR}/factorio-updater;
+# Now change the permissions to protect custom areas.
+chmod 755 ${INIT_DIR}/factorio;
+chmod 755 ${INIT_DIR}/factorio/factorio-updater/update_factorio.py;
+chmod 755 ${INIT_DIR}/selinux/compile.sh;
+chmod 755 ${INIT_DIR}/selinux/factorio/factorio.sh;
+chmod 755 ${INIT_DIR}/selinux/factorio-init/factorio-init.sh;
+chmod 640 ${INIT_DIR}/config;
+chmod 750 ${INIT_DIR}/selinux;
+chmod 750 ${INIT_DIR}/patches;
+chmod 750 ${INIT_DIR}/glibc;
 
 ${INIT_DIR}/selinux/compile.sh
 semodule --disable_dontaudit --build
