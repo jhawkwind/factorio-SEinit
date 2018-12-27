@@ -55,7 +55,7 @@ factorio_init_relabel_file_dirs(unconfined_t);
 # factorio_init_domtrans(unconfined_t); DO NOT do this, we don't want to auto transition.
 allow unconfined_t factorio_init_t:process { transition };
 allow unconfined_t factorio_init_exec_t:file { entrypoint };
-allow unconfined_t factorio_init_exec_t:file { execute read_file_perms };
+allow unconfined_t factorio_init_exec_t:file { execute read_file_perms relabelto relabelfrom };
 factorio_init_exec(unconfined_t);
 
 allow unconfined_service_t factorio_init_t:process { transition };
