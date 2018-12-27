@@ -2,6 +2,27 @@
 A factorio init script for linux with an optional SELINUX policy add-on.
 This is a fork of https://github.com/Bisa/factorio-init
 
+## Quick-N-Dirty - TLDR setup for CentOS 7
+You need unhindered/unlimited **root** access with **unconfined_u:unconfined_r:unconfined_t** context (cannot be any constraints or confinement unless global permissive),
+SELINUX should be enabled. Enforcing or Permissive. Cannot be disabled.
+
+You need to have ready the following:
+ 1. Factorio Online Username
+ 2. Factorio Token Key
+ 3. Factorio server title
+ 4. Factorio server description
+
+```bash
+yum -y install git; git clone --recurse-submodules -b experimental https://github.com/jhawkwind/factorio-SEinit /opt/factorio-init; chown -R root:root /opt/factorio-init/
+semanage permissive -a unconfined_t; # This is safer.
+chcon -R -u unconfined_u -r unconfined_r -t home_t -v /opt/factorio-init/; chcon -R -u unconfined_u -r unconfined_r -t home_bin_t -v /opt/factorio-init/unattended-centos-build.sh;
+chown -R root:root /opt/factorio-init/
+chmod 755 /opt/factorio-init/
+chmod 755 /opt/factorio-init/unattended-centos-build.sh
+/opt/factorio-init/unattended-centos-build.sh '<USERNAME>' '<TOKEN>' '<SERVER NAME>' '<SERVER DESCRIPTION>'
+semanage permissive -d unconfined_t; # Return configuration.
+```
+
 ## TODO
  * TCP/UDP port controls (netfilter).
  * firewall-cmd commands.
