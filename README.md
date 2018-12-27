@@ -13,6 +13,7 @@ You need to have ready the following:
  4. Factorio server description
 
 ```bash
+umask 0022;
 yum -y install git; git clone --recurse-submodules -b experimental https://github.com/jhawkwind/factorio-SEinit /opt/factorio-init; chown -R root:root /opt/factorio-init/
 semanage permissive -a unconfined_t; # This is safer.
 chcon -R -u unconfined_u -r unconfined_r -t home_t -v /opt/factorio-init/; chcon -R -u unconfined_u -r unconfined_r -t home_bin_t -v /opt/factorio-init/unattended-centos-build.sh;
