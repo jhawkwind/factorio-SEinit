@@ -96,4 +96,5 @@ userdom_use_inherited_user_ptys(factorio_t); # For when it is executed through a
 init_rw_stream_sockets(factorio_t); # Needed for socket file.
 dev_read_rand(factorio_t); # Need access to generate random number for new games.
 dev_read_realtime_clock(factorio_t); # Need access to clock.
+auth_read_passwd(factorio_init_t); # Apparently there is a need to figure out the user login name.
 
