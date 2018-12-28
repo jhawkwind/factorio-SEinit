@@ -21,9 +21,12 @@ GLIBC_DIR="/opt/glibc-2.18"
 # semanage permissive -d unconfined_t; # Return configuration.
 
 
-# Pull sources
+# Pull prerequsities
 umask 0022
+yum history > yum-history.before
 yum -y install git wget python-requests glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel policycoreutils-python policycoreutils-devel setools-console rpm-build
+yum history > yum-history.after
+diff yum-history.before yum-history.after | tail -n 1 | sed -i -e 's/^[^\|0-9]*[0-9]+/' > yum-history.id
 
 # Build GLIBC
 cd ${INIT_DIR}/glibc
