@@ -13,6 +13,7 @@ require {
 		type ld_so_t;
 		type tmp_t;
 		type fs_t;
+		type bin_t;
 		role system_r;
 		class filesystem { associate };
         class file { append create execute getattr ioctl lock open read rename setattr unlink write map };
