@@ -854,7 +854,7 @@ case "$1" in
     # Check if user wants to use custom map gen settings
     if [ $3 ]; then
       if [ -e "${WRITE_DIR}/$3" ]; then
-        createsavecmd="$createsavecmd --map-gen-settings=${WRITE_DIR}/$3 ${EXE_ARGS_GLIBC}"
+        createsavecmd="$createsavecmd --map-gen-settings=${WRITE_DIR}/$3"
       else
         echo "Specified map gen settings json does not exist"
         exit 1
@@ -864,7 +864,7 @@ case "$1" in
     # Check if user wants to use custom map settings
     if [ $4 ]; then
       if [ -e "${WRITE_DIR}/$4" ]; then
-        createsavecmd="$createsavecmd --map-settings=${WRITE_DIR}/$4 ${EXE_ARGS_GLIBC}"
+        createsavecmd="$createsavecmd --map-settings=${WRITE_DIR}/$4"
       else
         echo "Specified map settings json does not exist"
         exit 1
@@ -880,7 +880,7 @@ case "$1" in
       fi
     fi
 
-    if ! run_context "$createsavecmd"; then
+    if ! run_context "$createsavecmd ${EXE_ARGS_GLIBC}"; then
       echo "Failed to create new game"
       exit 1
     else
