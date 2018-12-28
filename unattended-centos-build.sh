@@ -26,7 +26,9 @@ umask 0022
 yum history > yum-history.before
 yum -y install git wget python-requests glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel policycoreutils-python policycoreutils-devel setools-console rpm-build
 yum history > yum-history.after
-diff yum-history.before yum-history.after | tail -n 1 | sed -i -e 's/^[^\|0-9]*[0-9]+/' > yum-history.id
+diff yum-history.before yum-history.after | tail -n 1 | sed -n -E 's/^[^\|0-9]*([0-9]+).*/\1/p' > yum-history.id
+transaction_id="$(cat yum-history.id)";
+rollback_id="$(( transaction_id - 1 ))";
 
 # Build GLIBC
 cd ${INIT_DIR}/glibc
@@ -89,3 +91,11 @@ sed -i -e "s/\"description\": \"[^\\\"]*\"/\"description\": \"${SERVER_DESCRIPTI
 
 cp ${INIT_DIR}/factorio.service.example /etc/systemd/system/factorio.service
 systemctl daemon-reload
+
+echo "Installation script has completed. If you wish to remove the extra build tools committed at the beginning, press ENTER."
+echo "Otherwise, press CTRL+C to exit."
+read -p "Press enter to continue . . ."
+
+if [[ "${rollback_id}" -gt 0 ]]; then
+	yum -y history rollback ${rollback_id}
+fi
