@@ -83,8 +83,8 @@ allow factorio_t self:rawip_socket { create getopt setopt };
 allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
 
-corecmd_exec_bin(factorio_init_t);
-corecmd_exec_shell(factorio_init_t);
+corecmd_exec_bin(factorio_t);
+corecmd_exec_shell(factorio_t);
 corenet_tcp_connect_http_port(factorio_t);
 corenet_udp_bind_generic_node(factorio_t);
 miscfiles_read_localization(factorio_t);
