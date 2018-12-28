@@ -205,7 +205,7 @@ make install
  - The following firewalld rules will come in handy. As a "TODO" is to automate this as part of the installation process.
  ```bash
  firewall-cmd --new-service=factorio-multiplayer --permanent
- firewall-cmd --service=factorio-multiplayer --description="Factorio multi-player lock step sychronization replication protocol" --permanent
+ firewall-cmd --service=factorio-multiplayer --set-description="Factorio multi-player lock step sychronization replication protocol" --permanent
  firewall-cmd --service=factorio-multiplayer --add-port=34197/udp --permanent
  firewall-cmd --add-service=factorio-multiplayer --permanent
  firewall-cmd --reload

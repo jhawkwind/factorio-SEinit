@@ -179,6 +179,9 @@ corenet_tcp_connect_http_port(factorio_init_t);
 userdom_use_inherited_user_ptys(factorio_init_t);
 auth_read_passwd(factorio_init_t);
 logging_create_devlog_dev(factorio_init_t);
+logging_admin_syslog(factorio_init_t);
+logging_systemctl_audit(factorio_init_t);
+
 
 ## Why is this needed?
 auditallow factorio_init_t usr_t:dir { write };
