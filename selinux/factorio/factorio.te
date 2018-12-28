@@ -93,4 +93,7 @@ kernel_read_system_state(factorio_t);
 miscfiles_read_generic_certs(factorio_t);
 sysnet_read_config(factorio_t); # Read network access such as resolver files for ping.
 userdom_use_inherited_user_ptys(factorio_t); # For when it is executed through an interactive session.
+init_rw_stream_sockets(factorio_t); # Needed for socket file.
+dev_read_rand(factorio_t); # Need access to generate random number for new games.
+dev_read_realtime_clock(factorio_t); # Need access to clock.
 
