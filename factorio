@@ -211,9 +211,14 @@ run_context() {
     # Make sure we are running as factorio user.
     # Then if running with SELINUX, change context.
     if [ "${SELINUX}" -eq 1 ]; then
-      runcon -u system_u -r system_r -t factorio_t -- ${1}
+      factorio_context_string="^system_u:system_r:factorio_t:.*";
+      if (! [[ "$(id -Z)" =~ ${factorio_context_string} ]]); then
+        runcon -u system_u -r system_r -t factorio_t -- /bin/bash -c "${1}"
+      else
+        /bin/bash -c "${1}"
+      fi
     else
-      /bin/bash "$1"
+      /bin/bash -c "${1}"
     fi
   else
     # To prevent odd permission behaviour, either 

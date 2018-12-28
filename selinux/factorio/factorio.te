@@ -13,7 +13,7 @@ require {
 		type ld_so_t;
 		type tmp_t;
 		type fs_t;
-		type bin_t;
+		type shell_exec_t;
 		role system_r;
 		class filesystem { associate };
         class file { append create execute getattr ioctl lock open read rename setattr unlink write map };
@@ -44,9 +44,9 @@ role system_r types factorio_t;
 #============= Auditing ==============
 auditallow factorio_t factorio_exec_t:file { entrypoint }; # add auditing to init_domain()
 auditallow factorio_t ld_so_t:file { entrypoint };
-auditallow factorio_t bin_t:file { entrypoint };
+auditallow factorio_t shell_exec_t:file { entrypoint };
 domain_entry_file(factorio_t, ld_so_t);
-domain_entry_file(factorio_t, bin_t);
+domain_entry_file(factorio_t, shell_exec_t);
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
@@ -70,6 +70,7 @@ type_transition factorio_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_t tmp_t:sock_file factorio_tmp_t;
 
+allow factorio_t shell_exec_t:file { execute read_file_perms };
 allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 allow factorio_exec_t fs_t:filesystem { associate }; # For relabeling process in the install.
 
