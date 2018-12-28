@@ -2,29 +2,18 @@ policy_module(factorio, 1.1.0)
 
 ########################################
 #
-# Declarations
-#
-
-type factorio_t;
-type factorio_exec_t;
-type factorio_tmp_t;
-domain_type(factorio_t);
-
-
-# You can uncomment this line and re-compile the module to debug permission issues.
-#permissive factorio_t;
-
-
-########################################
-#
 # factorio local policy
 #
 
 require {
+		attribute file_type;
+		attribute exec_type;
+		attribute tmpfile;
 		type unconfined_t;
 		type ld_so_t;
 		type tmp_t;
 		type fs_t;
+		type shell_exec_t;
 		role system_r;
 		class filesystem { associate };
         class file { append create execute getattr ioctl lock open read rename setattr unlink write map };
@@ -37,12 +26,27 @@ require {
         class udp_socket { bind connect create getattr setopt };
         class dir { getattr execute read search add_name };
 }
+
+########################################
+#
+# Declarations
+#
+
+type factorio_t;
+type factorio_exec_t, file_type, exec_type;
+type factorio_tmp_t, file_type, tmpfile;
+domain_type(factorio_t);
 role system_r types factorio_t;
+
+# You can uncomment this line and re-compile the module to debug permission issues.
+#permissive factorio_t;
 
 #============= Auditing ==============
 auditallow factorio_t factorio_exec_t:file { entrypoint }; # add auditing to init_domain()
 auditallow factorio_t ld_so_t:file { entrypoint };
+auditallow factorio_t shell_exec_t:file { entrypoint };
 domain_entry_file(factorio_t, ld_so_t);
+domain_entry_file(factorio_t, shell_exec_t);
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
@@ -53,8 +57,6 @@ factorio_exec(unconfined_t);
 
 #============= factorio_t ==============
 factorio_exec(factorio_t);
-fs_noxattr_type(factorio_exec_t);
-fs_noxattr_type(factorio_t);
 
 allow factorio_t self:unix_stream_socket create_stream_socket_perms;
 allow factorio_t self:fifo_file manage_fifo_file_perms;
@@ -70,6 +72,7 @@ type_transition factorio_t tmp_t:sock_file factorio_tmp_t;
 
 allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 allow factorio_exec_t fs_t:filesystem { associate }; # For relabeling process in the install.
+fs_getattr_xattr_fs(factorio_t) ; # This is needed for the command line options.
 
 allow factorio_t factorio_exec_t:file manage_file_perms;
 allow factorio_t self:dir manage_dir_perms;
@@ -81,6 +84,9 @@ allow factorio_t self:rawip_socket { create getopt setopt };
 allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
 
+corecmd_exec_ls(factorio_t);
+corecmd_exec_bin(factorio_t);
+corecmd_exec_shell(factorio_t);
 corenet_tcp_connect_http_port(factorio_t);
 corenet_udp_bind_generic_node(factorio_t);
 miscfiles_read_localization(factorio_t);
@@ -88,4 +94,7 @@ kernel_read_system_state(factorio_t);
 miscfiles_read_generic_certs(factorio_t);
 sysnet_read_config(factorio_t); # Read network access such as resolver files for ping.
 userdom_use_inherited_user_ptys(factorio_t); # For when it is executed through an interactive session.
-
+init_rw_stream_sockets(factorio_t); # Needed for socket file.
+dev_read_rand(factorio_t); # Need access to generate random number for new games.
+dev_read_realtime_clock(factorio_t); # Need access to clock.
+auth_read_passwd(factorio_t); # Apparently there is a need to figure out the user login name.

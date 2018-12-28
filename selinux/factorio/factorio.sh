@@ -46,8 +46,8 @@ make -f /usr/share/selinux/devel/Makefile factorio.pp || exit
 sepolicy manpage -p . -d factorio_t
 
 # Fixing the file context on /data/factorio-init/factorio
-/sbin/restorecon -F -R -n -v /opt/factorio
-/sbin/restorecon -F -R -n -v /opt/glibc-*
+# /sbin/restorecon -F -R -n -v /opt/factorio
+# /sbin/restorecon -F -R -n -v /opt/glibc-*
 # Generate a rpm package for the newly generated policy
 
 pwd=$(pwd)

@@ -1,6 +1,12 @@
-/opt/factorio-init(/.*)?				system_u:object_r:factorio_init_t:s0
-/opt/factorio-init/config		--	gen_context(system_u:object_r:factorio_init_conf_t,s0)
-/opt/factorio-init/factorio		--	gen_context(system_u:object_r:factorio_init_exec_t,s0)
-/data/factorio-init(/.*)?				system_u:object_r:factorio_init_t:s0
-/data/factorio-init/config		--	gen_context(system_u:object_r:factorio_init_conf_t,s0)
-/data/factorio-init/factorio		--	gen_context(system_u:object_r:factorio_init_exec_t,s0)
+/opt/factorio-init(/.*)?					system_u:object_r:factorio_init_t:s0
+/opt/factorio-init/config				--	system_u:object_r:factorio_init_conf_t:s0
+/opt/factorio-init/factorio				--	system_u:object_r:factorio_init_exec_t:s0
+/opt/factorio-init/selinux/compile.sh	--	unconfined_u:unconfined_r:unconfined_t:s0
+/opt/factorio-init/selinux(/.*)?			unconfined_u:unconfined_r:unconfined_t:s0
+/opt/factorio-init/glibc(/.*)?				unconfined_u:unconfined_r:unconfined_t:s0
+/data/factorio-init(/.*)?					system_u:object_r:factorio_init_t:s0
+/data/factorio-init/config				--	system_u:object_r:factorio_init_conf_t:s0
+/data/factorio-init/factorio			--	system_u:object_r:factorio_init_exec_t:s0
+/data/factorio-init/selinux/compile.sh	--	unconfined_u:unconfined_r:unconfined_t:s0
+/data/factorio-init/selinux(/.*)?			unconfined_u:unconfined_r:unconfined_t:s0
+/data/factorio-init/glibc(/.*)?				unconfined_u:unconfined_r:unconfined_t:s0

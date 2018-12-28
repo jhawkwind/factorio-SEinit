@@ -2,71 +2,170 @@ policy_module(factorio_init, 1.1.0)
 
 ########################################
 #
+# factorio local policy
+#
+
+require {
+		attribute domain;
+		attribute file_type;
+		attribute exec_type;
+		attribute configfile;
+		attribute can_relabelto_binary_policy;
+		type unconfined_t;
+		type tmp_t;
+		type factorio_t;
+		type factorio_tmp_t;
+		type ld_so_t;
+		type fs_t;
+		type usr_t;
+		type setfiles_exec_t;
+		type unconfined_service_t;
+		role system_r;
+		role unconfined_r;
+		class filesystem { associate };
+		class dir { write getattr execute read search add_name };
+		class process { transition };
+		class capability { chown fowner fsetid setuid setgid audit_write };
+		class file { execute execute_no_trans entrypoint };
+		class netlink_selinux_socket { create bind };
+		class netlink_audit_socket { create write read nlmsg_relay };
+}
+########################################
+#
 # Declarations
 #
 
-type factorio_init_t;
-type factorio_init_exec_t;
-type factorio_init_conf_t;
+type factorio_init_t, domain;
+type factorio_init_exec_t, file_type, exec_type;
+type factorio_init_conf_t, file_type, configfile;
 init_daemon_domain(factorio_init_t, factorio_init_exec_t)
 
 # You can uncomment this line and re-compile the module to debug permission issues.
 #permissive factorio_init_t;
 
-########################################
-#
-# factorio local policy
-#
-
-require {
-		type unconfined_t;
-		type tmp_t;
-		type factorio_t;
-		type factorio_tmp_t;
-		type fs_t;
-		role system_r;
-		class filesystem { associate };
-		class dir {getattr execute read search add_name };
-}
 role system_r types factorio_init_t;
+role unconfined_r types factorio_init_t;
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
-factorio_init_manage_file_dirs(unconfined_t);
-factorio_init_relabel_file_dirs(unconfined_t);
+allow unconfined_t factorio_init_t:dir { manage_dir_perms relabelto relabelfrom };
+allow unconfined_t factorio_init_t:file { manage_file_perms relabelto relabelfrom };
+# neverallow unconfined_t factorio_init_t:file { execute };
 
 # Allow transition
-factorio_init_domtrans(unconfined_t);
+# factorio_init_domtrans(unconfined_t); DO NOT do this, we don't want to auto transition.
+allow unconfined_t factorio_init_t:process { transition };
+allow unconfined_t factorio_init_exec_t:file { entrypoint };
+allow unconfined_t factorio_init_exec_t:file { execute manage_file_perms relabelto relabelfrom };
+allow unconfined_t factorio_init_conf_t:file { manage_file_perms relabelto relabelfrom };
 factorio_init_exec(unconfined_t);
+
+allow unconfined_service_t factorio_init_t:process { transition };
+allow unconfined_service_t factorio_init_exec_t:file { entrypoint };
+allow unconfined_service_t factorio_init_exec_t:file { execute read_file_perms };
+allow unconfined_service_t factorio_init_conf_t:file { read_file_perms };
+factorio_init_exec(unconfined_service_t);
+type_transition unconfined_service_t factorio_init_exec_t:file factorio_init_t;
 
 #============= factorio_init_t ==============
 #
+auditallow factorio_init_t factorio_init_exec_t:file { entrypoint };
+domain_entry_file(factorio_init_t, factorio_init_exec_t);
+factorio_init_exec(factorio_init_t); # Allow recursive execution.
+
+#### Allow relabeling and ownership change back to defined policies.
+type factorio_init_set_t, can_relabelto_binary_policy; # Inherit initial permissions from factorio_init_t, then add more permissions.
+domain_base_type(factorio_init_set_t);
+auditallow factorio_init_t factorio_init_set_t:process { transition };
+domtrans_pattern(factorio_init_t, setfiles_exec_t, factorio_init_set_t);
+can_exec(factorio_init_t,setfiles_exec_t);
+domain_entry_file(factorio_init_set_t,setfiles_exec_t);
+role system_r types factorio_init_set_t; # Allow ONLY SYSTEM roles to access this domain. Confined roles should not come here.
+allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
+allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
+allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay read }; # This is to send auditing information to the log
+allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
+
+allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t factorio_t:dir { relabelfrom relabelto manage_dir_perms };
+allow factorio_init_set_t factorio_t:fifo_file { relabelfrom relabelto manage_fifo_file_perms };
+allow factorio_init_set_t factorio_exec_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t factorio_tmp_t:file { relabelfrom relabelto manage_file_perms };
+allow factorio_init_set_t self:capability { fowner };
+allow factorio_init_t self:capability { chown fowner fsetid setuid setgid audit_write };
+allow factorio_init_t factorio_t:capability { chown fowner fsetid setuid setgid};
+files_list_root(factorio_init_set_t); # Must be able to read root.
+dev_rw_null(factorio_init_set_t); # Allow read/write to /dev/null.
+userdom_use_inherited_user_ptys(factorio_init_set_t); # This is used to display results.
+seutil_read_config(factorio_init_set_t); # Read the policy files to apply
+seutil_read_default_contexts(factorio_init_set_t); # Read the policy files to apply
+seutil_read_file_contexts(factorio_init_set_t); # Read the policy files to apply
+logging_read_audit_log(factorio_init_set_t); # Check audit logs.
+
+# This is restorcon searching all devices and filesystems for things to apply. Restorcon is being greedy.
+#dev_getattr_fs(factorio_init_set_t);
+#dev_getattr_sysfs_fs(factorio_init_set_t);
+#fs_getattr_cgroup(factorio_init_set_t);
+#fs_getattr_hugetlbfs(factorio_init_set_t);
+#fs_getattr_tmpfs(factorio_init_set_t);
+#fs_getattr_xattr_fs(factorio_init_set_t);
+#fs_list_hugetlbfs(factorio_init_set_t);
+#fs_search_cgroup_dirs(factorio_init_set_t);
+#term_getattr_pty_fs(factorio_init_set_t);
+#term_search_ptys(factorio_init_set_t);
+#userdom_search_user_tmp_dirs(factorio_init_set_t);
+
+# Always permit this to override.
+#permissive factorio_init_set_t;
+
+
 factorio_domtrans(factorio_init_t);
 factorio_exec(factorio_init_t);
 factorio_manage_file_dirs(factorio_init_t);
 
 allow factorio_init_t factorio_init_conf_t:file read_file_perms;
+allow factorio_init_t factorio_init_exec_t:file read_file_perms;
 allow factorio_init_t factorio_t:fifo_file { create getattr open read write };
 allow factorio_init_t factorio_t:process { noatsecure rlimitinh siginh signal signull };
 allow factorio_init_t self:capability net_raw;
 allow factorio_init_t self:process { setcap setexec };
 allow factorio_init_t self:rawip_socket { create getopt read setopt write };
-allow factorio_init_t self:udp_socket { connect create getattr read write };
 allow factorio_init_t self:unix_dgram_socket { connect create write };
+allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
+allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
+allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
 
 ## Allowed shared TMP file access
-allow factorio_init_t tmp_t:dir { getattr execute read search add_name };
+allow factorio_init_t tmp_t:dir { getattr execute read search add_name write };
 type_transition factorio_init_t tmp_t:file factorio_tmp_t;
 type_transition factorio_init_t tmp_t:dir factorio_tmp_t;
 type_transition factorio_init_t tmp_t:lnk_file factorio_tmp_t;
 type_transition factorio_init_t tmp_t:sock_file factorio_tmp_t;
 
+# Auto transition the process
+type_transition factorio_init_t factorio_exec_t:process factorio_t;
+type_transition factorio_init_t ld_so_t:process factorio_t;
+# type_transition unconfined_t factorio_init_exec_t:process factorio_init_t; # DO NOT DO THIS! You can't install that way!
+
+allow factorio_init_t usr_t:dir { add_name }; # Allow create subdirectory.
+type_transition factorio_init_t usr_t:dir factorio_t; # Create directory as factorio_t.
+
 allow factorio_init_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
+allow factorio_init_exec_t fs_t:filesystem { associate }; # This is necessary to avoid corruption when relabeling
+allow factorio_init_conf_t fs_t:filesystem { associate };  # This is necessary to avoid corruption when relabeling
 
 kernel_dgram_send(factorio_init_t); # Needed for logging
 selinux_validate_context(factorio_init_t); # Used to id -Z
 sysnet_read_config(factorio_init_t); # Read network access such as resolver files for ping.
 
+# Allow the init_t user to execute SU and change user.
+#can_exec(factorio_init_t,su_exec_t);
+#selinux_compute_access_vector(factorio_init_t);
+su_exec(factorio_init_t); # Change users when needed.
+
+userdom_manage_home_certs(factorio_init_t);
 corecmd_bin_entry_type(factorio_init_t);
 corecmd_exec_bin(factorio_init_t);
 corecmd_exec_shell(factorio_init_t);
@@ -77,7 +176,13 @@ files_exec_usr_files(factorio_init_t);
 files_read_etc_files(factorio_init_t);
 netutils_exec_ping(factorio_init_t);
 corenet_tcp_connect_http_port(factorio_init_t);
-fs_noxattr_type(factorio_init_t);
 userdom_use_inherited_user_ptys(factorio_init_t);
 auth_read_passwd(factorio_init_t);
 logging_create_devlog_dev(factorio_init_t);
+# logging_admin_syslog(factorio_init_t);
+logging_systemctl_audit(factorio_init_t);
+
+
+## Why is this needed?
+auditallow factorio_init_t usr_t:dir { write };
+allow factorio_init_t usr_t:dir { write };
