@@ -25,13 +25,25 @@ semanage permissive -d unconfined_t; # Return configuration.
 systemctl enable factorio
 systemctl start factorio
 ```
+Don't forget the firewall settings:
+```bash
+firewall-cmd --new-service=factorio-multiplayer --permanent
+firewall-cmd --service=factorio-multiplayer --set-description="Factorio multi-player lock step sychronization replication protocol" --permanent
+firewall-cmd --service=factorio-multiplayer --add-port=34197/udp --permanent
+firewall-cmd --add-service=factorio-multiplayer --permanent
+firewall-cmd --reload
+```
 
 ## TODO
- * TCP/UDP port controls (netfilter).
- * firewall-cmd commands.
- * SELINUX Boolean values for certain functions such as network, sockets, user home reads, etc.
- * SELINUX_u user and roles.
- * Proper transition points from init-script.
+ * TCP/UDP port controls (factorio_net_t).
+ * firewall-cmd commands built-in to scripts.
+ * SELINUX Boolean values for certain functions such as network access, sockets, user home reads, server commands through FIFO, etc.
+ * SELINUX_u user and roles (factorio_u:factorio_r).
+ * Clean up: proper transition points from init-script.
+ * Clean up: organize policy files.
+ * Clean up: CentOS deployment scripts.
+ * Clean up: Break out functions of the init-script.
+ * Verify updater works correctly.
  * Tighten up policy rules to explicits.
 
 # Dependencies
@@ -210,6 +222,23 @@ make install
  firewall-cmd --add-service=factorio-multiplayer --permanent
  firewall-cmd --reload
  ```
+ 
+ # Verify SELINUX enforcement
+ 
+ You know that the Factorio process is boxed in when you run
+ 
+ ```bash
+ ps auxZ | grep factorio
+ ```
+ 
+ You should get this:
+ 
+ ```
+ system_u:system_r:factorio_t:s0 factorio  1835  0.0  0.0 107988   360 ?        S    21:19   0:00 tail -f /opt/factorio/bin/x64/../../server.fifo
+ system_u:system_r:factorio_t:s0 factorio  1836 39.0  1.6 301224 63052 ?        Sl   21:19   0:00 /opt/glibc-2.18/lib/ld-2.18.so --library-path /opt/glibc-2.18/lib /opt/factorio/bin/x64/factorio --config /opt/factorio/config/config.ini --port 34197 --start-server-load-latest --server-settings /opt/factorio/data/server-settings.json --executable-path /opt/factorio/bin/x64/factorio
+ ```
+ Where **system_u:system_r:factorio_t:s0** indicates that it is running within the factorio_t domain context; and the **factorio** immediately after is the user it is running on. If you can login
+ and the server runs correctly, you are done!
 
 # Thank You
 - To all who find this script useful in one way or the other
