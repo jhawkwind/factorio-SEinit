@@ -83,6 +83,8 @@ allow factorio_t self:rawip_socket { create getopt setopt };
 allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
 
+allow factorio_t fs_t:filesystem rw_file read_file_perms ; # This is needed for the command line options.
+
 corecmd_exec_ls(factorio_t);
 corecmd_exec_bin(factorio_t);
 corecmd_exec_shell(factorio_t);
@@ -97,4 +99,3 @@ init_rw_stream_sockets(factorio_t); # Needed for socket file.
 dev_read_rand(factorio_t); # Need access to generate random number for new games.
 dev_read_realtime_clock(factorio_t); # Need access to clock.
 auth_read_passwd(factorio_t); # Apparently there is a need to figure out the user login name.
-
