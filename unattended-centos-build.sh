@@ -76,7 +76,7 @@ restorecon -R -F -v ${INIT_DIR}
 restorecon -R -F -v ${GLIBC_DIR}
 restorecon -R -F -v ${FACTORIO_DIR}
 
-semodule --disable_dontaudit --build # Debugging only, noisy.
+# semodule --disable_dontaudit --build # Debugging only, noisy.
 ${INIT_DIR}/factorio install
 
 cp ${FACTORIO_DIR}/data/server-settings.example.json ${FACTORIO_DIR}/data/server-settings.json
