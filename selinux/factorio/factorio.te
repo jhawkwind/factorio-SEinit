@@ -72,6 +72,7 @@ type_transition factorio_t tmp_t:sock_file factorio_tmp_t;
 
 allow factorio_t fs_t:filesystem { associate }; # This is needed to "touch" the .pid and .fifo file. Found using "semodule --disable_dontaudit --build"
 allow factorio_exec_t fs_t:filesystem { associate }; # For relabeling process in the install.
+allow factorio_t fs_t:filesystem read_file_perms ; # This is needed for the command line options.
 
 allow factorio_t factorio_exec_t:file manage_file_perms;
 allow factorio_t self:dir manage_dir_perms;
@@ -82,8 +83,6 @@ allow factorio_t self:process { setcap };
 allow factorio_t self:rawip_socket { create getopt setopt };
 allow factorio_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_t self:udp_socket { bind connect create getattr setopt read write };
-
-allow factorio_t fs_t:filesystem rw_file read_file_perms ; # This is needed for the command line options.
 
 corecmd_exec_ls(factorio_t);
 corecmd_exec_bin(factorio_t);
