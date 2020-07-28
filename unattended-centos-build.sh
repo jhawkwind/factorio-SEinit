@@ -31,13 +31,15 @@ diff yum-history.before yum-history.after | tail -n 1 | sed -n -E 's/^[^\|0-9]*(
 transaction_id="$(cat yum-history.id)";
 rollback_id="$(( transaction_id - 1 ))";
 
-# Build GLIBC
+# Create User
+useradd -c "Factorio Server account" -d ${FACTORIO_DIR} -M -s /usr/sbin/nologin -r factorio
+
+# Build GLIBC is NOT needed in CentOS 8 as it has the needed version.
 # cd ${INIT_DIR}/glibc
 # git apply ../patches/test-installation.pl.patch
 # mkdir ./glibc-build
 # cd ./glibc-build
 # ../configure --prefix="${GLIBC_DIR}" --with-selinux
-useradd -c "Factorio Server account" -d ${FACTORIO_DIR} -M -s /usr/sbin/nologin -r factorio
 # make
 # make install
 
@@ -45,7 +47,7 @@ cp /opt/factorio-init/config.example ${INIT_DIR}/config
 sed -i -e 's/SELINUX=0/SELINUX=1/g' ${INIT_DIR}/config
 sed -i -e 's/WAIT_PINGPONG=0/WAIT_PINGPONG=1/g' ${INIT_DIR}/config
 sed -i -e "s/FACTORIO_PATH=.*/FACTORIO_PATH=${FACTORIO_DIR}/g" ${INIT_DIR}/config
-# sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" ${INIT_DIR}/config
+# sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" ${INIT_DIR}/config # Don't change the GLIBC.
 sed -i -e 's/ALT_GLIBC=1/ALT_GLIBC=0/g' ${INIT_DIR}/config
 sed -i -e "s/UPDATE_USERNAME=you/UPDATE_USERNAME=${USERNAME}/g" ${INIT_DIR}/config
 sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" ${INIT_DIR}/config
@@ -74,7 +76,7 @@ ${INIT_DIR}/selinux/compile.sh
 
 # The compile script is dumb with the restorecon, make sure it did it to the correct place.
 restorecon -R -F -v ${INIT_DIR}
-restorecon -R -F -v ${GLIBC_DIR}
+#restorecon -R -F -v ${GLIBC_DIR}
 restorecon -R -F -v ${FACTORIO_DIR}
 
 semodule --disable_dontaudit --build # Debugging only, noisy.
