@@ -2,7 +2,7 @@
 A factorio init script for linux with an optional SELINUX policy add-on.
 This is a fork of https://github.com/Bisa/factorio-init
 
-## Quick-N-Dirty - TLDR setup for CentOS 7
+## Quick-N-Dirty - TLDR setup for CentOS 8
 You need unhindered/unlimited **root** access with **unconfined_u:unconfined_r:unconfined_t** context (cannot be any constraints or confinement unless global permissive),
 SELINUX should be enabled. Enforcing or Permissive. Cannot be disabled.
 
