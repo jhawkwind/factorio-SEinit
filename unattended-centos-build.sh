@@ -23,29 +23,30 @@ GLIBC_DIR="/opt/glibc-2.18"
 
 # Pull prerequsities
 umask 0022
+yum -y install glibc
 yum history > yum-history.before
-yum -y install git wget python-requests glibc-devel glibc gcc make gcc-c++ autoconf texinfo libselinux-devel audit-libs-devel libcap-devel policycoreutils-python policycoreutils-devel setools-console rpm-build
+yum -y install git wget glibc-devel gcc make gcc-c++ autoconf libselinux-devel audit-libs-devel libcap-devel policycoreutils-python-utils policycoreutils-devel setools-console rpm-build
 yum history > yum-history.after
 diff yum-history.before yum-history.after | tail -n 1 | sed -n -E 's/^[^\|0-9]*([0-9]+).*/\1/p' > yum-history.id
 transaction_id="$(cat yum-history.id)";
 rollback_id="$(( transaction_id - 1 ))";
 
 # Build GLIBC
-cd ${INIT_DIR}/glibc
-git apply ../patches/test-installation.pl.patch
-mkdir ./glibc-build
-cd ./glibc-build
-../configure --prefix="${GLIBC_DIR}" --with-selinux
+# cd ${INIT_DIR}/glibc
+# git apply ../patches/test-installation.pl.patch
+# mkdir ./glibc-build
+# cd ./glibc-build
+# ../configure --prefix="${GLIBC_DIR}" --with-selinux
 useradd -c "Factorio Server account" -d ${FACTORIO_DIR} -M -s /usr/sbin/nologin -r factorio
-make
-make install
+# make
+# make install
 
 cp /opt/factorio-init/config.example ${INIT_DIR}/config
 sed -i -e 's/SELINUX=0/SELINUX=1/g' ${INIT_DIR}/config
 sed -i -e 's/WAIT_PINGPONG=0/WAIT_PINGPONG=1/g' ${INIT_DIR}/config
 sed -i -e "s/FACTORIO_PATH=.*/FACTORIO_PATH=${FACTORIO_DIR}/g" ${INIT_DIR}/config
-sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" ${INIT_DIR}/config
-sed -i -e 's/ALT_GLIBC=0/ALT_GLIBC=1/g' ${INIT_DIR}/config
+# sed -i -e "s/ALT_GLIBC_DIR=.*/ALT_GLIBC_DIR=${GLIBC_DIR}/g" ${INIT_DIR}/config
+sed -i -e 's/ALT_GLIBC=1/ALT_GLIBC=0/g' ${INIT_DIR}/config
 sed -i -e "s/UPDATE_USERNAME=you/UPDATE_USERNAME=${USERNAME}/g" ${INIT_DIR}/config
 sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" ${INIT_DIR}/config
 
