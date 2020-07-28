@@ -98,5 +98,5 @@ echo "Otherwise, press CTRL+C to exit."
 read -p "Press enter to continue . . ."
 
 if [[ "${rollback_id}" -gt 0 ]]; then
-	yum -y history rollback ${rollback_id}
+	yum -y history rollback ${rollback_id} --skip-broken
 fi
