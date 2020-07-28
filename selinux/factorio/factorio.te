@@ -1,4 +1,4 @@
-policy_module(factorio, 1.1.0)
+policy_module(factorio, 1.1.1)
 
 ########################################
 #
@@ -48,6 +48,7 @@ auditallow factorio_t ld_so_t:file { entrypoint };
 auditallow factorio_t shell_exec_t:file { entrypoint };
 domain_entry_file(factorio_t, ld_so_t);
 domain_entry_file(factorio_t, shell_exec_t);
+domain_entry_file(factorio_t, factorio_exec_t);
 
 #============= unconfined_t ==============
 # Allow relabeling from root/unconfined domain, you will need chcon permission or restorecon permission.
