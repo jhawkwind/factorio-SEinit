@@ -29,6 +29,8 @@ require {
 		class file { execute execute_no_trans entrypoint };
 		class netlink_selinux_socket { create bind };
 		class netlink_audit_socket { create write read nlmsg_relay };
+		class icmp_socket { create write nlmsg_relay read };
+                class netlink_route_socket { getopt };
 }
 ########################################
 #
@@ -85,6 +87,8 @@ allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
 allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
 allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay read }; # This is to send auditing information to the log
 allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
+allow factorio_init_t self:icmp_socket { create write nlmsg_relay read };
+allow factorio_init_t self:netlink_route_socket getopt;
 
 allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
 allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
