@@ -14,6 +14,7 @@ require {
 		type tmp_t;
 		type fs_t;
 		type shell_exec_t;
+		type init_t;
 		role system_r;
 		class filesystem { associate };
         class file { append create execute getattr ioctl lock open read rename setattr unlink write map };
@@ -24,7 +25,7 @@ require {
         class rawip_socket { create getopt setopt };
         class netlink_route_socket { bind create getattr nlmsg_read write read };
         class udp_socket { bind connect create getattr setopt };
-        class dir { getattr execute read search add_name };
+        class dir { getattr execute read search add_name write remove_name };
 }
 
 ########################################
@@ -54,6 +55,10 @@ factorio_manage_file_dirs(unconfined_t);
 factorio_relabel_file_dirs(unconfined_t);
 factorio_domtrans(unconfined_t);
 factorio_exec(unconfined_t);
+
+#============= init_t ==================
+allow init_t factorio_t:dir { getattr search write remove_name };
+allow init_t factorio_t:file { unlink };
 
 #============= factorio_t ==============
 factorio_exec(factorio_t);

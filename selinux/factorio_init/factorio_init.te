@@ -1,4 +1,4 @@
-policy_module(factorio_init, 1.1.1)
+policy_module(factorio_init, 1.1.0)
 
 ########################################
 #
@@ -30,7 +30,7 @@ require {
 		class netlink_selinux_socket { create bind };
 		class netlink_audit_socket { create write read nlmsg_relay };
 		class icmp_socket { create write nlmsg_relay read };
-                class netlink_route_socket { getopt };
+		class netlink_route_socket { getopt setopt };
 }
 ########################################
 #
@@ -87,8 +87,6 @@ allow factorio_init_t usr_t:dir list_dir_perms; # Must allow to go down opt.
 allow factorio_init_t self:netlink_selinux_socket { create bind }; # This is to send auditing information to the log
 allow factorio_init_t self:netlink_audit_socket { create write nlmsg_relay read }; # This is to send auditing information to the log
 allow factorio_init_t factorio_init_set_t:process { noatsecure rlimitinh siginh }; # Allow the set process to inherit parent session settings and to mark the extra privileged session.
-allow factorio_init_t self:icmp_socket { create write nlmsg_relay read };
-allow factorio_init_t self:netlink_route_socket getopt;
 
 allow factorio_init_set_t factorio_init_t:file { relabelfrom relabelto manage_file_perms };
 allow factorio_init_set_t factorio_init_t:dir { relabelfrom relabelto manage_dir_perms };
@@ -137,9 +135,10 @@ allow factorio_init_t self:capability net_raw;
 allow factorio_init_t self:process { setcap setexec };
 allow factorio_init_t self:rawip_socket { create getopt read setopt write };
 allow factorio_init_t self:unix_dgram_socket { connect create write };
-allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read };
+allow factorio_init_t self:netlink_route_socket { bind create getattr nlmsg_read write read getopt setopt};
 allow factorio_init_t self:tcp_socket { connect create getattr getopt setopt read write };
 allow factorio_init_t self:udp_socket { bind connect create getattr setopt read write };
+allow factorio_init_t self:icmp_socket { create write nlmsg_relay read };
 
 ## Allowed shared TMP file access
 allow factorio_init_t tmp_t:dir { getattr execute read search add_name write };
@@ -190,3 +189,7 @@ logging_systemctl_audit(factorio_init_t);
 ## Why is this needed?
 auditallow factorio_init_t usr_t:dir { write };
 allow factorio_init_t usr_t:dir { write };
+
+#============= factorio_t ==============
+auditallow factorio_t factorio_init_t:dir { getattr search };
+allow factorio_t factorio_init_t:dir { getattr search };
