@@ -53,7 +53,7 @@ sed -i -e "s/UPDATE_TOKEN=yourtoken/UPDATE_TOKEN=${TOKEN}/g" ${INIT_DIR}/config
 # These permissions matter.
 chown -R root:root  ${INIT_DIR}; # Make sure expected defaults.
 find ${INIT_DIR} -type d -exec chmod 755 {} \; # Make sure expected defaults.
-find ${INIT_DIR} -type f -file chmod 644 {} \; # Make sure expected defaults.
+find ${INIT_DIR} -type f -exec chmod 644 {} \; # Make sure expected defaults.
 # Now change owners where access needs to be shared with the factorio user.
 chown root:factorio ${INIT_DIR};
 chown root:factorio ${INIT_DIR}/config;
