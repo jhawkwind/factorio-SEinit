@@ -240,6 +240,27 @@ make install
  Where **system_u:system_r:factorio_t:s0** indicates that it is running within the factorio_t domain context; and the **factorio** immediately after is the user it is running on. If you can login
  and the server runs correctly, you are done!
 
+# Temporary workaround for updater
+
+I haven't updated the SELINUX permissions and the way it executes the updater. It is currently and incorrectly, using the factorio_t domain to update, which is not what I want; since that provides the running domain with too much permissions. We want the "higher privileged" factorio_init_t to initiate the updater at privilege with factorio_update_t that can access everything in factorio_t, but with added temp_dir permissions. So somewhere between factorio_init_t's level of access and factorio_t's level of access.
+
+For now, do this as a unconfined root user to update as the workaround:
+```bash
+systemctl stop factorio;
+systemctl disable factorio;
+semanage permissive -a factorio_t;
+semanage permissive -a factorio_init_t;
+sudo -u factorio -- /bin/runcon -t factorio_init_t -r system_r -u system_u -- /opt/factorio-init/factorio update;
+semanage permissive -d factorio_t;
+semanage permissive -d factorio_init_t;
+semanage permissive -a unconfined_t;
+restorecon -vFR /opt/factorio-init/;
+restorecon -vFR /opt/factorio/;
+semanage permissive -d unconfined_t;
+systemctl enable factorio;
+systemctl start factorio;
+```
+
 # Thank You
 - To all who find this script useful in one way or the other
 - A big thank you to [Wube](https://www.factorio.com/team) for making [Factorio](https://www.factorio.com/)
