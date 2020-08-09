@@ -6,8 +6,8 @@ USERNAME="${1}"
 TOKEN="${2}"
 SERVER_NAME="${3}"
 SERVER_DESCRIPTION="${4}"
-INIT_DIR="/opt/factorio-init"
-FACTORIO_DIR="/opt/factorio"
+INIT_DIR='/opt/factorio-init'
+FACTORIO_DIR='/opt/factorio'
 GLIBC_DIR="/opt/glibc-2.18"
 
 # Presume it is done, since this file is on the system.
