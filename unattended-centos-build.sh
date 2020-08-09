@@ -85,6 +85,10 @@ ${INIT_DIR}/factorio install
 cp ${FACTORIO_DIR}/data/server-settings.example.json ${FACTORIO_DIR}/data/server-settings.json
 chown factorio:factorio ${FACTORIO_DIR}/data/server-settings.json
 restorecon -F -v ${FACTORIO_DIR}/data/server-settings.json
+find ${FACTORIO_DIR}/data -type d -exec chmod 750 {} \; # Make sure expected defaults.
+find ${FACTORIO_DIR}/saves -type d -exec chmod 750 {} \; # Make sure expected defaults.
+find ${FACTORIO_DIR}/data/*.json -type f -exec chmod 640 {} \; # Make sure expected defaults.
+find ${FACTORIO_DIR}/saves -type f -exec chmod 640 {} \; # Make sure expected defaults.
 sed -i -e 's/"public": true/"public": false/g' ${FACTORIO_DIR}/data/server-settings.json
 sed -i -e "s/\"username\": \"\"/\"username\": \"${USERNAME}\"/g" ${FACTORIO_DIR}/data/server-settings.json
 sed -i -e "s/\"token\": \"\"/\"token\": \"${TOKEN}\"/g" ${FACTORIO_DIR}/data/server-settings.json
