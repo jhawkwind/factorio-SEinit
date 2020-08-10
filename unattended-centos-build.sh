@@ -95,6 +95,9 @@ sed -i -e "s/\"token\": \"\"/\"token\": \"${TOKEN}\"/g" ${FACTORIO_DIR}/data/ser
 sed -i -e "s/\"admins\": \[\]/\"admins\": [ \"${USERNAME}\" ]/g" ${FACTORIO_DIR}/data/server-settings.json
 sed -i -e "s/\"name\": \"[^\\\"]*\"/\"name\": \"${SERVER_NAME}\"/g" ${FACTORIO_DIR}/data/server-settings.json
 sed -i -e "s/\"description\": \"[^\\\"]*\"/\"description\": \"${SERVER_DESCRIPTION}\"/g" ${FACTORIO_DIR}/data/server-settings.json
+if [[ ! -f ${FACTORIO_DIR}/server-adminlist.json ]]; then
+	echo "[\n\t\"${USERNAME}\"\n]" > ${FACTORIO_DIR}/server-adminlist.json
+fi
 
 cp ${INIT_DIR}/factorio.service.example /etc/systemd/system/factorio.service
 systemctl daemon-reload
